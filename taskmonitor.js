@@ -1,14 +1,29 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*-*/
-/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* Firefox userChrome script
+ * Show per-tab cpu and memory bar on tab
+ * Show all-task cpu and memory bar
+ * Tested on Firefox 68 and 71
+ * Author: garywill (https://github.com/garywill)
+ * https://github.com/garywill/firefoxtaskmonitor
+ * 
+ * Notice
+ * This file contains code from Mozilla Firefox aboutPerformance.js
+ * Code from Mozilla Firefox aboutPerformance.js is licensed under MPL
+ * 
+ */
+console.log("taskmonitor.js");
+
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 "use strict";
 
+/*
 const {
     Services
 } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+*/
+
 const {
     AddonManager
 } = ChromeUtils.import(
@@ -35,7 +50,7 @@ const BUFFER_SAMPLING_RATE_MS = 1000;
 const BUFFER_DURATION_MS = 10000;
 
 // How often we should update
-const UPDATE_INTERVAL_MS = 2000;
+const UPDATE_INTERVAL_MS = 1000;
 
 // The name of the application
 const BRAND_BUNDLE = Services.strings.createBundle(
@@ -66,15 +81,21 @@ let tabFinder = {
                 let id = browser.outerWindowID; // May be `null` if the browser isn't loaded yet
                 if (id != null) {
                     this._map.set(id, browser);
+                    //console.log(`tabFinder map set id ${id}`);
                 }
             }
             if (tabbrowser.preloadedBrowser) {
                 let browser = tabbrowser.preloadedBrowser;
                 if (browser.outerWindowID) {
                     this._map.set(browser.outerWindowID, browser);
+                    //console.log(`tabFinder map set preloaded id ${browser.outerWindowID}`);
                 }
             }
+            //console.log("----- tabFinder.update() -----");
+            //this._map.forEach((i)=>{console.log(i._contentTitle);})
+            //console.log("----- tabFinder.update() finish-----");
         }
+
     },
 
     /**
@@ -90,10 +111,12 @@ let tabFinder = {
     get(id) {
         let browser = this._map.get(id);
         if (!browser) {
+            //console.log("tabFinder get() no browser");
             return null;
         }
         let tabbrowser = browser.getTabBrowser();
         if (!tabbrowser) {
+            //console.log("tabFinder get() no tabbrowser");
             return {
                 tabbrowser: null,
                 tab: {
@@ -104,21 +127,16 @@ let tabFinder = {
                 },
             };
         }
+        //console.log(`tabFinder get() find!  ${browser._contentTitle}`);
+        //console.log(tabbrowser);
+        //console.log(id);
+        //console.log(tabbrowser.getTabForBrowser(browser));
         return {
             tabbrowser,
-            tab: tabbrowser.getTabForBrowser(browser)
+            tab: tabbrowser.getTabForBrowser(browser) // <tab>节点
         };
     },
 
-    getAny(ids) {
-        for (let id of ids) {
-            let result = this.get(id);
-            if (result) {
-                return result;
-            }
-        }
-        return null;
-    },
 };
 
 /**
@@ -225,6 +243,7 @@ var State = {
                     duration: 0,
                     memory: 0,
                     children: [],
+                    pid: pid,
                 };
                 tabs[id] = tab;
             }
@@ -264,6 +283,7 @@ var State = {
                         duration: 0,
                         memory: 0,
                         children: [],
+                        pid: 0,
                     };
                     tabs[id] = tab;
                 }
@@ -330,8 +350,7 @@ var State = {
             }
 
             classifier.asyncClassifyLocalWithFeatures(
-                uri,
-                [feature],
+                uri, [feature],
                 Ci.nsIUrlClassifierFeature.blacklist,
                 list => {
                     if (list.length) {
@@ -366,12 +385,13 @@ var State = {
 
             let type = "other";
             let name = `${host} (${id})`;
-            let image = "chrome://mozapps/skin/places/defaultFavicon.svg";
+            //let image = "chrome://mozapps/skin/places/defaultFavicon.svg";
+            let image = "";
             let found = tabFinder.get(parseInt(id));
             if (found) {
                 if (found.tabbrowser) {
                     name = found.tab.getAttribute("label");
-                    image = found.tab.getAttribute("image");
+                    //image = found.tab.getAttribute("image");
                     type = "tab";
                 } else {
                     name = {
@@ -381,22 +401,23 @@ var State = {
                 }
             } else if (id == 1) {
                 name = BRAND_NAME;
-                image = "chrome://branding/content/icon32.png";
+                //image = "chrome://branding/content/icon32.png";
                 type = "browser";
             } else if (/^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(host)) {
                 let addon = WebExtensionPolicy.getByHostname(host);
                 if (!addon) {
                     continue;
                 }
-                name = `${addon.name} (${addon.id})`;
-                image = "chrome://mozapps/skin/extensions/extension.svg";
+                //name = `${addon.name} (${addon.id})`;
+                name = addon.name;
+                //image = "chrome://mozapps/skin/extensions/extensionGeneric-16.svg";
                 type = gSystemAddonIds.has(addon.id) ? "system-addon" : "addon";
             } else if (id == 0 && !tab.isWorker) {
                 name = {
                     id: "ghost-windows"
                 };
             }
-
+            /*
             if (
                 type != "tab" &&
                 type != "addon" &&
@@ -407,6 +428,7 @@ var State = {
             ) {
                 continue;
             }
+            */
 
             // Create a map of all the child items from the previous time we read the
             // counters, indexed by counterId so that we can quickly find the previous
@@ -496,143 +518,18 @@ var State = {
                 durationSinceStartOfBuffer,
                 dispatchesSinceStartOfBuffer,
                 children,
+                tabNode: (found && found.tabbrowser) ? found.tab : null,
+                pid: tab.pid,
             });
         }
         return counters;
     },
-
-    getMaxEnergyImpact(counters) {
-        return Math.max(
-            ...counters.map(c => {
-                return Control._computeEnergyImpact(
-                    c.dispatchesSincePrevious,
-                    c.durationSincePrevious
-                );
-            })
-        );
-    },
 };
 
 var View = {
-    _fragment: document.createDocumentFragment(),
-    async commit() {
-        let tbody = document.getElementById("dispatch-tbody");
 
-        // Force translation to happen before we insert the new content in the DOM
-        // to avoid flicker when resizing.
-        await document.l10n.translateFragment(this._fragment);
+    appendRow(name, energyImpact, mem_united, tooltip, type) {
 
-        while (tbody.firstChild) {
-            tbody.firstChild.remove();
-        }
-        tbody.appendChild(this._fragment);
-        this._fragment = document.createDocumentFragment();
-    },
-    insertAfterRow(row) {
-        row.parentNode.insertBefore(this._fragment, row.nextSibling);
-        this._fragment = document.createDocumentFragment();
-    },
-    displayEnergyImpact(elt, energyImpact, maxEnergyImpact) {
-        if (!energyImpact) {
-            elt.textContent = "–";
-            elt.style.setProperty("--bar-width", 0);
-        } else {
-            let impact;
-            let barWidth;
-            const mediumEnergyImpact = 25;
-            if (energyImpact < 1) {
-                impact = "low";
-                // Width 0-10%.
-                barWidth = 10 * energyImpact;
-            } else if (energyImpact < mediumEnergyImpact) {
-                impact = "medium";
-                // Width 10-50%.
-                barWidth = (10 + 2 * energyImpact) * (5 / 6);
-            } else {
-                impact = "high";
-                // Width 50-100%.
-                let energyImpactFromZero = energyImpact - mediumEnergyImpact;
-                if (maxEnergyImpact > 100) {
-                    barWidth =
-                        50 +
-                        (energyImpactFromZero / (maxEnergyImpact - mediumEnergyImpact)) *
-                        50;
-                } else {
-                    barWidth = 50 + energyImpactFromZero * (2 / 3);
-                }
-            }
-            document.l10n.setAttributes(elt, "energy-impact-" + impact, {
-                value: energyImpact,
-            });
-            if (maxEnergyImpact != -1) {
-                elt.style.setProperty("--bar-width", barWidth);
-            }
-        }
-    },
-    appendRow(
-        name,
-        energyImpact,
-        memory,
-        tooltip,
-        type,
-        maxEnergyImpact = -1,
-        image = ""
-    ) {
-        let row = document.createElement("tr");
-
-        let elt = document.createElement("td");
-        if (typeof name == "string") {
-            elt.textContent = name;
-        } else if (name.title) {
-            document.l10n.setAttributes(elt, name.id, {
-                title: name.title
-            });
-        } else {
-            document.l10n.setAttributes(elt, name.id);
-        }
-        if (image) {
-            elt.style.backgroundImage = `url('${image}')`;
-        }
-
-        if (["subframe", "tracker", "worker"].includes(type)) {
-            elt.classList.add("indent");
-        } else {
-            elt.classList.add("root");
-        }
-        if (["tracker", "worker"].includes(type)) {
-            elt.classList.add(type);
-        }
-        row.appendChild(elt);
-
-        elt = document.createElement("td");
-        let typeLabelType = type == "system-addon" ? "addon" : type;
-        document.l10n.setAttributes(elt, "type-" + typeLabelType);
-        row.appendChild(elt);
-
-        elt = document.createElement("td");
-        elt.classList.add("energy-impact");
-        this.displayEnergyImpact(elt, energyImpact, maxEnergyImpact);
-        row.appendChild(elt);
-
-        elt = document.createElement("td");
-        if (!memory) {
-            elt.textContent = "–";
-        } else {
-            let unit = "KB";
-            memory = Math.ceil(memory / 1024);
-            if (memory > 1024) {
-                memory = Math.ceil((memory / 1024) * 10) / 10;
-                unit = "MB";
-                if (memory > 1024) {
-                    memory = Math.ceil((memory / 1024) * 100) / 100;
-                    unit = "GB";
-                }
-            }
-            document.l10n.setAttributes(elt, "size-" + unit, {
-                value: memory
-            });
-        }
-        row.appendChild(elt);
 
         if (tooltip) {
             for (let key of ["dispatchesSincePrevious", "durationSincePrevious"]) {
@@ -640,191 +537,73 @@ var View = {
                     tooltip[key] = "–";
                 }
             }
-            document.l10n.setAttributes(row, "item", tooltip);
         }
 
-        elt = document.createElement("td");
+        console.log(`name=${name}\tEI=${energyImpact}\tmem=${mem_united}`);
+
         if (type == "tab") {
-            let img = document.createElement("span");
-            img.className = "action-icon close-icon";
-            document.l10n.setAttributes(img, "close-tab");
-            elt.appendChild(img);
-        } else if (type == "addon") {
-            let img = document.createElement("span");
-            img.className = "action-icon addon-icon";
-            document.l10n.setAttributes(img, "show-addon");
-            elt.appendChild(img);
-        }
-        row.appendChild(elt);
 
-        this._fragment.appendChild(row);
-        return row;
+        } else if (type == "addon") {
+
+        }
+
+        return null;
+    },
+    memoryAddUnit(memory) {
+        let unit = "";
+        let mem_united = "?";
+        if (memory) {
+            unit = "KB";
+            mem_united = Math.ceil(memory / 1024);
+            if (mem_united > 1024) {
+                mem_united = Math.ceil((mem_united / 1024) * 10) / 10;
+                unit = "MB";
+                if (mem_united > 1024) {
+                    mem_united = Math.ceil((mem_united / 1024) * 100) / 100;
+                    unit = "GB";
+                }
+            }
+            mem_united += unit;
+        }
+        return mem_united;
     },
 };
 
 var Control = {
-    _openItems: new Set(),
     _sortOrder: "",
-    _removeSubtree(row) {
-        while (
-            row.nextSibling &&
-            row.nextSibling.firstChild.classList.contains("indent")
-        ) {
-            row.nextSibling.remove();
-        }
-    },
     init() {
-        let tbody = document.getElementById("dispatch-tbody");
-        tbody.addEventListener("click", event => {
-            this._updateLastMouseEvent();
-
-            // Handle showing or hiding subitems of a row.
-            let target = event.target;
-            if (target.classList.contains("twisty")) {
-                let row = target.parentNode.parentNode;
-                let id = row.windowId;
-                if (target.classList.toggle("open")) {
-                    this._openItems.add(id);
-                    this._showChildren(row);
-                    View.insertAfterRow(row);
-                } else {
-                    this._openItems.delete(id);
-                    this._removeSubtree(row);
-                }
-                return;
-            }
-
-            // Handle closing a tab.
-            if (target.classList.contains("close-icon")) {
-                let row = target.parentNode.parentNode;
-                let id = parseInt(row.windowId);
-                let found = tabFinder.get(id);
-                if (!found || !found.tabbrowser) {
-                    return;
-                }
-                let {
-                    tabbrowser,
-                    tab
-                } = found;
-                tabbrowser.removeTab(tab);
-                this._removeSubtree(row);
-                row.remove();
-                return;
-            }
-
-            if (target.classList.contains("addon-icon")) {
-                let row = target.parentNode.parentNode;
-                let id = row.windowId;
-                let parentWin =
-                    window.docShell.browsingContext.embedderElement.ownerGlobal;
-                parentWin.BrowserOpenAddonsMgr(
-                    "addons://detail/" + encodeURIComponent(id)
-                );
-                return;
-            }
-
-            // Handle selection changes
-            let row = target.parentNode;
-            if (this.selectedRow) {
-                this.selectedRow.removeAttribute("selected");
-            }
-            if (row.windowId) {
-                row.setAttribute("selected", "true");
-                this.selectedRow = row;
-            } else if (this.selectedRow) {
-                this.selectedRow = null;
-            }
-        });
-
-        // Select the tab of double clicked items.
-        tbody.addEventListener("dblclick", event => {
-            let id = parseInt(event.target.parentNode.windowId);
-            if (isNaN(id)) {
-                return;
-            }
-            let found = tabFinder.get(id);
-            if (!found || !found.tabbrowser) {
-                return;
-            }
-            let {
-                tabbrowser,
-                tab
-            } = found;
-            tabbrowser.selectedTab = tab;
-            tabbrowser.ownerGlobal.focus();
-        });
-
-        tbody.addEventListener("mousemove", () => {
-            this._updateLastMouseEvent();
-        });
-
+        /*
         window.addEventListener("visibilitychange", event => {
             if (!document.hidden) {
                 this._updateDisplay(true);
             }
         });
-
-        document
-            .getElementById("dispatch-thead")
-            .addEventListener("click", async event => {
-                if (!event.target.classList.contains("clickable")) {
-                    return;
-                }
-
-                if (this._sortOrder) {
-                    let [column, direction] = this._sortOrder.split("_");
-                    const td = document.getElementById(`column-${column}`);
-                    td.classList.remove(direction);
-                }
-
-                const columnId = event.target.id;
-                if (columnId == "column-type") {
-                    this._sortOrder =
-                        this._sortOrder == "type_asc" ? "type_desc" : "type_asc";
-                } else if (columnId == "column-energy-impact") {
-                    this._sortOrder =
-                        this._sortOrder == "energy-impact_desc" ?
-                        "energy-impact_asc" :
-                        "energy-impact_desc";
-                } else if (columnId == "column-memory") {
-                    this._sortOrder =
-                        this._sortOrder == "memory_desc" ? "memory_asc" : "memory_desc";
-                } else if (columnId == "column-name") {
-                    this._sortOrder =
-                        this._sortOrder == "name_asc" ? "name_desc" : "name_asc";
-                }
-
-                let direction = this._sortOrder.split("_")[1];
-                event.target.classList.add(direction);
-
-                await this._updateDisplay(true);
-            });
+        */
     },
     _lastMouseEvent: 0,
     _updateLastMouseEvent() {
         this._lastMouseEvent = Date.now();
     },
     async update() {
+        //console.log("");
+        //console.log("===start period================");
         await State.update();
-
-        if (document.hidden) {
-            return;
-        }
 
         await wait(0);
 
         await this._updateDisplay();
+        //console.log("===finish period================");
     },
     // The force parameter can force a full update even when the mouse has been
     // moved recently.
     async _updateDisplay(force = false) {
         let counters = State.getCounters();
-        let maxEnergyImpact = State.getMaxEnergyImpact(counters);
         // If the mouse has been moved recently, update the data displayed
         // without moving any item to avoid the risk of users clicking an action
         // button for the wrong item.
         // Memory use is unlikely to change dramatically within a few seconds, so
         // it's probably fine to not update the Memory column in this case.
+
         if (
             !force &&
             Date.now() - this._lastMouseEvent < TIME_BEFORE_SORTING_AGAIN
@@ -834,143 +613,175 @@ var Control = {
                     id,
                     dispatchesSincePrevious,
                     durationSincePrevious,
-                } of counters) {
+                } of counters()) {
                 let energyImpact = this._computeEnergyImpact(
                     dispatchesSincePrevious,
                     durationSincePrevious
                 );
                 energyImpactPerId.set(id, energyImpact);
             }
-
-            let row = document.getElementById("dispatch-tbody").firstChild;
-            while (row) {
-                if (row.windowId && energyImpactPerId.has(row.windowId)) {
-                    // We update the value in the Energy Impact column, but don't
-                    // update the children, as if the child count changes there's a
-                    // risk of making other rows move up or down.
-                    const kEnergyImpactColumn = 2;
-                    let elt = row.childNodes[kEnergyImpactColumn];
-                    View.displayEnergyImpact(
-                        elt,
-                        energyImpactPerId.get(row.windowId),
-                        maxEnergyImpact
-                    );
-                }
-                row = row.nextSibling;
-            }
             return;
         }
 
-        let selectedId = -1;
-        // Reset the selectedRow field and the _openItems set each time we redraw
-        // to avoid keeping forever references to closed window ids.
-        if (this.selectedRow) {
-            selectedId = this.selectedRow.windowId;
-            this.selectedRow = null;
-        }
-        let openItems = this._openItems;
-        this._openItems = new Set();
+        let addons_all_cpu = 0;
+        let addons_all_mem = 0;
+        let addons_all_tooltip = "";
 
-        counters = this._sortCounters(counters);
-        for (let {
+        //counters = this._sortCounters(counters);
+
+        for (
+
+            let {
                 id,
                 name,
                 image,
                 type,
-                totalDispatches,
-                dispatchesSincePrevious,
-                memory,
-                totalDuration,
+                memory: memory,
+                totalDispatches: dispatches,
+                totalDuration: duration,
                 durationSincePrevious,
+                dispatchesSincePrevious,
+                durationSinceStartOfBuffer,
+                dispatchesSinceStartOfBuffer,
                 children,
-            } of counters) {
-            let row = View.appendRow(
-                name,
-                this._computeEnergyImpact(
-                    dispatchesSincePrevious,
-                    durationSincePrevious
-                ),
-                memory, {
-                    totalDispatches,
-                    totalDuration: Math.ceil(totalDuration / 1000),
-                    dispatchesSincePrevious,
-                    durationSincePrevious: Math.ceil(durationSincePrevious / 1000),
-                },
-                type,
-                maxEnergyImpact,
-                image
-            );
-            row.windowId = id;
-            if (id == selectedId) {
-                row.setAttribute("selected", "true");
-                this.selectedRow = row;
+                tabNode: tabNode,
+                pid,
+            } of counters)
+
+        /*
+        let {
+            id,
+            name,
+            image,
+            type,
+            totalDispatches,
+            dispatchesSincePrevious,
+            memory,
+            totalDuration,
+            durationSincePrevious,
+            children,
+            tabNode
+        } of counters) 
+        */
+        {
+            if (name.title) name = name.title;
+            else if (name.id) name = name.id;
+
+            EnergyImpact = this._computeEnergyImpact(
+                dispatchesSincePrevious,
+                durationSincePrevious);
+
+
+            let mem_united = View.memoryAddUnit(memory);
+
+
+            if (type == "tab") {
+
+                let tabAllBarsContParent =
+                    document.getAnonymousElementByAttribute(tabNode, "class", "tab-content") ||
+                    tabNode.getElementsByClassName("tab-background")[0];
+                let tabAllBarsCont = tabAllBarsContParent.getElementsByClassName("tabBars")[0];
+                if (!tabAllBarsCont) {
+                    tabAllBarsCont = document.createElement("div");
+                    tabAllBarsCont.className = "tabBars";
+                    tabAllBarsCont.style.position = "absolute";
+                    tabAllBarsCont.style.right = "2px";
+                    tabAllBarsCont.style.bottom = 0;
+                    tabAllBarsCont.style.height = "100%";
+                    tabAllBarsCont.style.width = "11px";
+                    tabAllBarsContParent.appendChild(tabAllBarsCont);
+                }
+                this.addBarsToNode(tabAllBarsCont, EnergyImpact, memory);
+                //console.log(`cpu=${EnergyImpact}  ${tabNode.getAttribute("label")}`);
+
+                tabAllBarsCont.tooltipText = `CPU ${EnergyImpact}\nMEM ${mem_united}\nPID ${pid}`;
+
+                //document.getAnonymousElementByAttribute(tabNode,"anonid","tab-icon-image").tooltipText = 
+                //    `CPU ${EnergyImpact}\nMEM ${mem_united}`;
+
+                /*
+                View.appendRow(
+                    `id=${id} name=${name}`,
+                    EnergyImpact,
+                    mem_united, 
+                    {
+                        totalDispatches,
+                        totalDuration: Math.ceil(totalDuration / 1000),
+                        dispatchesSincePrevious,
+                        durationSincePrevious: Math.ceil(durationSincePrevious / 1000),
+                    },
+                    type
+                );
+                */
+                addons_all_tooltip += `${EnergyImpact}\t${mem_united}\t<${name}>\t${pid}\n`;
+            } else if (type == "addon") {
+                addons_all_tooltip += `${EnergyImpact}\t${mem_united}\t[${name}]\t${pid}\n`;
+            } else {
+                addons_all_cpu += EnergyImpact;
+                addons_all_mem += memory;
+                addons_all_tooltip += `${EnergyImpact}\t${mem_united}\t${name}\t${pid}\n`;
             }
+
 
             if (!children.length) {
                 continue;
             }
 
-            // Show the twisty image.
-            let elt = row.firstChild;
-            let img = document.createElement("span");
-            img.className = "twisty";
-            let open = openItems.has(id);
-            if (open) {
-                img.classList.add("open");
-                this._openItems.add(id);
-            }
-
-            // If there's an l10n id on our <td> node, any image we add will be
-            // removed during localization, so move the l10n id to a <span>
-            let l10nAttrs = document.l10n.getAttributes(elt);
-            if (l10nAttrs.id) {
-                let span = document.createElement("span");
-                document.l10n.setAttributes(span, l10nAttrs.id, l10nAttrs.args);
-                elt.removeAttribute("data-l10n-id");
-                elt.removeAttribute("data-l10n-args");
-                elt.insertBefore(span, elt.firstChild);
-            }
-
-            elt.insertBefore(img, elt.firstChild);
-
-            row._children = children;
-            if (open) {
-                this._showChildren(row);
-            }
         }
 
-        await View.commit();
-    },
-    _showChildren(row) {
-        let children = row._children;
-        children.sort(
-            (a, b) => b.dispatchesSincePrevious - a.dispatchesSincePrevious
-        );
-        for (let row of children) {
-            let host = row.host.replace(/^blob:https?:\/\//, "");
-            let type = "subframe";
-            if (State.isTracker(host)) {
-                type = "tracker";
-            }
-            if (row.isWorker) {
-                type = "worker";
-            }
-            View.appendRow(
-                row.host,
-                this._computeEnergyImpact(
-                    row.dispatchesSincePrevious,
-                    row.durationSincePrevious
-                ),
-                row.memory, {
-                    totalDispatches: row.dispatchCount,
-                    totalDuration: Math.ceil(row.duration / 1000),
-                    dispatchesSincePrevious: row.dispatchesSincePrevious,
-                    durationSincePrevious: Math.ceil(row.durationSincePrevious / 1000),
-                },
-                type
-            );
+        let addonsAllBarsContParent = document.getElementById("TabsToolbar");
+        let addonsAllBarsCont = addonsAllBarsContParent.getElementsByClassName("addonsBars")[0];
+        if (!addonsAllBarsCont) {
+            addonsAllBarsCont = document.createElement("div");
+            addonsAllBarsCont.className = "addonsBars";
+            addonsAllBarsCont.style.position = "absolute";
+            addonsAllBarsCont.style.right = 0;
+            addonsAllBarsCont.style.bottom = 0;
+            addonsAllBarsCont.style.height = "100%";
+            addonsAllBarsCont.style.width = "11px";
+            addonsAllBarsContParent.appendChild(addonsAllBarsCont);
         }
+
+
+        this.addBarsToNode(addonsAllBarsCont, addons_all_cpu, addons_all_mem);
+
+        addonsAllBarsCont.tooltipText = addons_all_tooltip;
+
     },
+
+    addBarsToNode(node, cpu, memory) {
+        var cpubar;
+        cpubar = node.getElementsByClassName("cpuBar")[0];
+        //console.log(cpubar);
+        if (!cpubar) {
+            cpubar = document.createElement("div");
+            cpubar.className = "cpuBar";
+            cpubar.style.backgroundColor = "#fd9191";
+            cpubar.style.width = "3px";
+            cpubar.style.position = "absolute";
+            cpubar.style.right = "6px";
+            cpubar.style.bottom = 0;
+            node.appendChild(cpubar);
+        }
+        cpubar.style.height = Math.min((cpu > 0) ? cpu : 0, 100) + "%";
+
+        var membar;
+        membar = node.getElementsByClassName("memBar")[0];
+        //console.log(membar);
+        if (!membar) {
+            membar = document.createElement("div");
+            membar.className = "memBar";
+            membar.style.backgroundColor = "rgb(242, 242, 0)"; //yellow
+            //membar.style.backgroundColor = "rgb(60, 160, 244)"; //blue
+            membar.style.width = "3px";
+            membar.style.position = "absolute";
+            membar.style.right = "2px";
+            membar.style.bottom = 0;
+            node.appendChild(membar);
+        }
+        membar.style.height = Math.min(memory / 500000000 * 100, 100) + "%";
+    },
+
     _computeEnergyImpact(dispatches, duration) {
         // 'Dispatches' doesn't make sense to users, and it's difficult to present
         // two numbers in a meaningful way, so we need to somehow aggregate the
@@ -985,57 +796,12 @@ var Control = {
         // Keep only 2 digits after the decimal point.
         return Math.ceil(energyImpact * 100) / 100;
     },
-    _getTypeWeight(type) {
-        let weights = {
-            tab: 3,
-            addon: 2,
-            "system-addon": 1,
-        };
-        return weights[type] || 0;
-    },
     _sortCounters(counters) {
         return counters.sort((a, b) => {
             // Force 'Recently Closed Tabs' to be always at the bottom, because it'll
             // never be actionable.
             if (a.name.id && a.name.id == "ghost-windows") {
                 return 1;
-            }
-
-            if (this._sortOrder) {
-                let res;
-                let [column, order] = this._sortOrder.split("_");
-                switch (column) {
-                    case "memory":
-                        res = a.memory - b.memory;
-                        break;
-                    case "type":
-                        if (a.type != b.type) {
-                            res = this._getTypeWeight(b.type) - this._getTypeWeight(a.type);
-                        } else {
-                            res = String.prototype.localeCompare.call(a.name, b.name);
-                        }
-                        break;
-                    case "name":
-                        res = String.prototype.localeCompare.call(a.name, b.name);
-                        break;
-                    case "energy-impact":
-                        res =
-                            this._computeEnergyImpact(
-                                a.dispatchesSincePrevious,
-                                a.durationSincePrevious
-                            ) -
-                            this._computeEnergyImpact(
-                                b.dispatchesSincePrevious,
-                                b.durationSincePrevious
-                            );
-                        break;
-                    default:
-                        res = String.prototype.localeCompare.call(a.name, b.name);
-                }
-                if (order == "desc") {
-                    res = -1 * res;
-                }
-                return res;
             }
 
             // Note: _computeEnergyImpact uses UPDATE_INTERVAL_MS which doesn't match
@@ -1060,16 +826,32 @@ var Control = {
     },
 };
 
-window.onload = async function() {
-    Control.init();
+var taskMonitorTimerID = null;
+async function startTaskMonitor() {
+    if (taskMonitorTimerID) {
+        console.log("TaskMonitor already running");
+        return;
+    }
+    //Control.init();
 
+    /*
     let addons = await AddonManager.getAddonsByTypes(["extension"]);
     for (let addon of addons) {
         if (addon.isSystem) {
             gSystemAddonIds.add(addon.id);
         }
     }
+    */
+
 
     await Control.update();
-    window.setInterval(() => Control.update(), UPDATE_INTERVAL_MS);
+
+    taskMonitorTimerID = window.setInterval(() => Control.update(), UPDATE_INTERVAL_MS);
 };
+
+function stopTaskMonitor() {
+    window.clearInterval(taskMonitorTimerID);
+    taskMonitorTimerID = null;
+}
+
+startTaskMonitor();
