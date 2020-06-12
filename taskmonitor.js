@@ -18,12 +18,6 @@ console.log("taskmonitor.js");
 
 "use strict";
 
-/*
-const {
-    Services
-} = ChromeUtils.import("resource://gre/modules/Services.jsm");
-*/
-
 const {
     AddonManager
 } = ChromeUtils.import(
@@ -78,22 +72,17 @@ let tabFinder = {
         for (let win of Services.wm.getEnumerator("navigator:browser")) {
             let tabbrowser = win.gBrowser;
             for (let browser of tabbrowser.browsers) {
-                let id = browser.outerWindowID; // May be `null` if the browser isn't loaded yet
+                let id = browser.outerWindowID;
                 if (id != null) {
                     this._map.set(id, browser);
-                    //console.log(`tabFinder map set id ${id}`);
                 }
             }
             if (tabbrowser.preloadedBrowser) {
                 let browser = tabbrowser.preloadedBrowser;
                 if (browser.outerWindowID) {
                     this._map.set(browser.outerWindowID, browser);
-                    //console.log(`tabFinder map set preloaded id ${browser.outerWindowID}`);
                 }
             }
-            //console.log("----- tabFinder.update() -----");
-            //this._map.forEach((i)=>{console.log(i._contentTitle);})
-            //console.log("----- tabFinder.update() finish-----");
         }
 
     },
@@ -111,12 +100,10 @@ let tabFinder = {
     get(id) {
         let browser = this._map.get(id);
         if (!browser) {
-            //console.log("tabFinder get() no browser");
             return null;
         }
         let tabbrowser = browser.getTabBrowser();
         if (!tabbrowser) {
-            //console.log("tabFinder get() no tabbrowser");
             return {
                 tabbrowser: null,
                 tab: {
@@ -127,10 +114,6 @@ let tabFinder = {
                 },
             };
         }
-        //console.log(`tabFinder get() find!  ${browser._contentTitle}`);
-        //console.log(tabbrowser);
-        //console.log(id);
-        //console.log(tabbrowser.getTabForBrowser(browser));
         return {
             tabbrowser,
             tab: tabbrowser.getTabForBrowser(browser) // <tab>节点
@@ -385,13 +368,11 @@ var State = {
 
             let type = "other";
             let name = `${host} (${id})`;
-            //let image = "chrome://mozapps/skin/places/defaultFavicon.svg";
             let image = "";
             let found = tabFinder.get(parseInt(id));
             if (found) {
                 if (found.tabbrowser) {
                     name = found.tab.getAttribute("label");
-                    //image = found.tab.getAttribute("image");
                     type = "tab";
                 } else {
                     name = {
@@ -401,34 +382,19 @@ var State = {
                 }
             } else if (id == 1) {
                 name = BRAND_NAME;
-                //image = "chrome://branding/content/icon32.png";
                 type = "browser";
             } else if (/^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(host)) {
                 let addon = WebExtensionPolicy.getByHostname(host);
                 if (!addon) {
                     continue;
                 }
-                //name = `${addon.name} (${addon.id})`;
                 name = addon.name;
-                //image = "chrome://mozapps/skin/extensions/extensionGeneric-16.svg";
                 type = gSystemAddonIds.has(addon.id) ? "system-addon" : "addon";
             } else if (id == 0 && !tab.isWorker) {
                 name = {
                     id: "ghost-windows"
                 };
             }
-            /*
-            if (
-                type != "tab" &&
-                type != "addon" &&
-                !Services.prefs.getBoolPref(
-                    "toolkit.aboutPerformance.showInternals",
-                    false
-                )
-            ) {
-                continue;
-            }
-            */
 
             // Create a map of all the child items from the previous time we read the
             // counters, indexed by counterId so that we can quickly find the previous
@@ -527,28 +493,6 @@ var State = {
 };
 
 var View = {
-
-    appendRow(name, energyImpact, mem_united, tooltip, type) {
-
-
-        if (tooltip) {
-            for (let key of ["dispatchesSincePrevious", "durationSincePrevious"]) {
-                if (Number.isNaN(tooltip[key]) || tooltip[key] < 0) {
-                    tooltip[key] = "–";
-                }
-            }
-        }
-
-        console.log(`name=${name}\tEI=${energyImpact}\tmem=${mem_united}`);
-
-        if (type == "tab") {
-
-        } else if (type == "addon") {
-
-        }
-
-        return null;
-    },
     memoryAddUnit(memory) {
         let unit = "";
         let mem_united = "?";
@@ -572,13 +516,6 @@ var View = {
 var Control = {
     _sortOrder: "",
     init() {
-        /*
-        window.addEventListener("visibilitychange", event => {
-            if (!document.hidden) {
-                this._updateDisplay(true);
-            }
-        });
-        */
     },
     _lastMouseEvent: 0,
     _updateLastMouseEvent() {
@@ -647,22 +584,6 @@ var Control = {
                 tabNode: tabNode,
                 pid,
             } of counters)
-
-        /*
-        let {
-            id,
-            name,
-            image,
-            type,
-            totalDispatches,
-            dispatchesSincePrevious,
-            memory,
-            totalDuration,
-            durationSincePrevious,
-            children,
-            tabNode
-        } of counters) 
-        */
         {
             if (name.title) name = name.title;
             else if (name.id) name = name.id;
@@ -696,23 +617,6 @@ var Control = {
 
                 tabAllBarsCont.tooltipText = `CPU ${EnergyImpact}\nMEM ${mem_united}\nPID ${pid}`;
 
-                //document.getAnonymousElementByAttribute(tabNode,"anonid","tab-icon-image").tooltipText = 
-                //    `CPU ${EnergyImpact}\nMEM ${mem_united}`;
-
-                /*
-                View.appendRow(
-                    `id=${id} name=${name}`,
-                    EnergyImpact,
-                    mem_united, 
-                    {
-                        totalDispatches,
-                        totalDuration: Math.ceil(totalDuration / 1000),
-                        dispatchesSincePrevious,
-                        durationSincePrevious: Math.ceil(durationSincePrevious / 1000),
-                    },
-                    type
-                );
-                */
                 addons_all_tooltip += `${EnergyImpact}\t${mem_united}\t<${name}>\t${pid}\n`;
             } else if (type == "addon") {
                 addons_all_tooltip += `${EnergyImpact}\t${mem_united}\t[${name}]\t${pid}\n`;
@@ -752,7 +656,6 @@ var Control = {
     addBarsToNode(node, cpu, memory) {
         var cpubar;
         cpubar = node.getElementsByClassName("cpuBar")[0];
-        //console.log(cpubar);
         if (!cpubar) {
             cpubar = document.createElement("div");
             cpubar.className = "cpuBar";
@@ -767,7 +670,6 @@ var Control = {
 
         var membar;
         membar = node.getElementsByClassName("memBar")[0];
-        //console.log(membar);
         if (!membar) {
             membar = document.createElement("div");
             membar.className = "memBar";
@@ -821,17 +723,6 @@ async function startTaskMonitor() {
         console.log("TaskMonitor already running");
         return;
     }
-    //Control.init();
-
-    /*
-    let addons = await AddonManager.getAddonsByTypes(["extension"]);
-    for (let addon of addons) {
-        if (addon.isSystem) {
-            gSystemAddonIds.add(addon.id);
-        }
-    }
-    */
-
 
     await Control.update();
 
