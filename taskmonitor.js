@@ -627,7 +627,7 @@ var Control = {
         let addons_all_mem = 0;
         let addons_all_tooltip = "";
 
-        //counters = this._sortCounters(counters);
+        counters = this._sortCounters(counters);
 
         for (
 
@@ -798,30 +798,19 @@ var Control = {
     },
     _sortCounters(counters) {
         return counters.sort((a, b) => {
-            // Force 'Recently Closed Tabs' to be always at the bottom, because it'll
-            // never be actionable.
-            if (a.name.id && a.name.id == "ghost-windows") {
-                return 1;
-            }
-
-            // Note: _computeEnergyImpact uses UPDATE_INTERVAL_MS which doesn't match
-            // the time between the most recent sample and the start of the buffer,
-            // BUFFER_DURATION_MS would be better, but the values is never displayed
-            // so this is OK.
-            let aEI = this._computeEnergyImpact(
-                a.dispatchesSinceStartOfBuffer,
-                a.durationSinceStartOfBuffer
+            var a_cpu, b_cpu;
+            a_cpu = this._computeEnergyImpact(
+                a.dispatchesSincePrevious,
+                a.durationSincePrevious
             );
-            let bEI = this._computeEnergyImpact(
-                b.dispatchesSinceStartOfBuffer,
-                b.durationSinceStartOfBuffer
+            b_cpu = this._computeEnergyImpact(
+                b.dispatchesSincePrevious,
+                b.durationSincePrevious
             );
-            if (aEI != bEI) {
-                return bEI - aEI;
-            }
-
-            // a.name is sometimes an object, so we can't use a.name.localeCompare.
-            return String.prototype.localeCompare.call(a.name, b.name);
+            var a_value, b_value;
+            a_value = a_cpu + a.memory/(150*1024*1024);
+            b_value = b_cpu + b.memory/(150*1024*1024);
+            return b_value - a_value;
         });
     },
 };
