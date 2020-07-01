@@ -1,7 +1,7 @@
 /* Firefox userChrome script
  * Show per-tab cpu and memory bar on tab
- * Show all-task cpu and memory bar
- * Tested on Firefox 68 and 71
+ * Show tasks-without-tabs cpu and memory bar
+ * Tested on Firefox 78
  * Author: garywill (https://github.com/garywill)
  * https://github.com/garywill/firefoxtaskmonitor
  * 
@@ -598,9 +598,7 @@ var Control = {
 
             if (type == "tab") {
 
-                let tabAllBarsContParent =
-                    document.getAnonymousElementByAttribute(tabNode, "class", "tab-content") ||
-                    tabNode.getElementsByClassName("tab-background")[0];
+                let tabAllBarsContParent = tabNode.getElementsByClassName("tab-background")[0];
                 let tabAllBarsCont = tabAllBarsContParent.getElementsByClassName("tabBars")[0];
                 if (!tabAllBarsCont) {
                     tabAllBarsCont = document.createElement("div");
@@ -615,10 +613,12 @@ var Control = {
                 this.addBarsToNode(tabAllBarsCont, EnergyImpact, memory);
                 //console.log(`cpu=${EnergyImpact}  ${tabNode.getAttribute("label")}`);
 
-                tabAllBarsCont.tooltipText = `CPU ${EnergyImpact}\nMEM ${mem_united}\nPID ${pid}`;
+                tabAllBarsCont.title = tabAllBarsCont.tooltipText = `CPU ${EnergyImpact}\nMEM ${mem_united}\nPID ${pid}`;
 
                 addons_all_tooltip += `${EnergyImpact}\t${mem_united}\t<${name}>\t${pid}\n`;
             } else if (type == "addon") {
+                addons_all_cpu += EnergyImpact;
+                addons_all_mem += memory;
                 addons_all_tooltip += `${EnergyImpact}\t${mem_united}\t[${name}]\t${pid}\n`;
             } else {
                 addons_all_cpu += EnergyImpact;
@@ -641,15 +641,16 @@ var Control = {
             addonsAllBarsCont.style.position = "absolute";
             addonsAllBarsCont.style.right = 0;
             addonsAllBarsCont.style.bottom = 0;
-            addonsAllBarsCont.style.height = "100%";
+            //addonsAllBarsCont.style.height = "var(--tab-min-height) !important";
             addonsAllBarsCont.style.width = "11px";
             addonsAllBarsContParent.appendChild(addonsAllBarsCont);
         }
+        addonsAllBarsCont.style.height = window.getComputedStyle(addonsAllBarsContParent).height
 
 
         this.addBarsToNode(addonsAllBarsCont, addons_all_cpu, addons_all_mem);
 
-        addonsAllBarsCont.tooltipText = addons_all_tooltip;
+        addonsAllBarsCont.title = addonsAllBarsCont.tooltipText = addons_all_tooltip;
 
     },
 
@@ -673,15 +674,15 @@ var Control = {
         if (!membar) {
             membar = document.createElement("div");
             membar.className = "memBar";
-            membar.style.backgroundColor = "rgb(242, 242, 0)"; //yellow
-            //membar.style.backgroundColor = "rgb(60, 160, 244)"; //blue
+            //membar.style.backgroundColor = "rgb(242, 242, 0)"; //yellow
+            membar.style.backgroundColor = "rgb(60, 160, 244)"; //blue
             membar.style.width = "3px";
             membar.style.position = "absolute";
             membar.style.right = "2px";
             membar.style.bottom = 0;
             node.appendChild(membar);
         }
-        membar.style.height = Math.min(memory / 500000000 * 100, 100) + "%";
+        membar.style.height = Math.min(memory / 400000000 * 100, 100) + "%";
     },
 
     _computeEnergyImpact(dispatches, duration) {
