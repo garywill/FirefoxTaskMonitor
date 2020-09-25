@@ -638,14 +638,16 @@ var Control = {
         if (!addonsAllBarsCont) {
             addonsAllBarsCont = document.createElement("div");
             addonsAllBarsCont.className = "addonsBars";
-            addonsAllBarsCont.style.position = "absolute";
-            addonsAllBarsCont.style.right = 0;
-            addonsAllBarsCont.style.bottom = 0;
+            addonsAllBarsCont.style.position = "relative";
+            addonsAllBarsCont.style.display = "block";
+            //addonsAllBarsCont.style.right = 0;
+            //addonsAllBarsCont.style.bottom = 0;
             //addonsAllBarsCont.style.height = "var(--tab-min-height) !important";
+            addonsAllBarsCont.style.height = "100%";
             addonsAllBarsCont.style.width = "11px";
             addonsAllBarsContParent.appendChild(addonsAllBarsCont);
         }
-        addonsAllBarsCont.style.height = window.getComputedStyle(addonsAllBarsContParent).height
+        //addonsAllBarsCont.style.height = window.getComputedStyle(addonsAllBarsContParent).height
 
 
         this.addBarsToNode(addonsAllBarsCont, addons_all_cpu, addons_all_mem);
