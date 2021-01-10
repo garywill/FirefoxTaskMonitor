@@ -1,6 +1,8 @@
-# firefox taskmonitor
+# Firefox TaskMonitor
 
 Show CPU &amp; memory bar, per tab and all tasks. 
+
+![screenshot](https://s1.ax1x.com/2020/07/18/UcsPLF.jpg)
 
 Firefox userChrome script.
 
