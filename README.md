@@ -10,7 +10,7 @@ Firefox userChrome script. Tested on Firefox 91.
 
 - Show every tab's CPU and memory usage: bars on every tab button
 - Show every addon's CPU and memory usage: bars on every every addon's toolbar button (if it has)
-- Show all browser tasks' CPU and memory bars (except tabs) on right side of navigation bar. Including every addon, hidden tab, hidden task
+- Show all browser tasks' (except tabs) CPU and memory bars on right side of tab bar. Including every addon, hidden tab, hidden task (removable widget)
 - Clicking above widget shows top tasks dynamically
 - Mouse hover shows more details
 - Optional periodically clean Firefox memory (manually enable it in the code)
