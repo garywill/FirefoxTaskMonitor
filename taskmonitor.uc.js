@@ -13,6 +13,11 @@
  * Code from Mozilla Firefox aboutPerformance.js is licensed under MPL
  * 
  */
+
+// ==UserScript==
+// @include         main
+// ==/UserScript==
+
 console.log("taskmonitor.js");
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
