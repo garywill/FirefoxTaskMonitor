@@ -4,7 +4,7 @@ Show CPU &amp; memory bars, per tab, per addon, and all tasks.
 
 ![screenshot](https://s1.ax1x.com/2020/07/18/UcsPLF.jpg)
 
-Firefox userChrome script. Tested on Firefox 91.
+Firefox userChrome script. Tested on Firefox 102, with xiaoxiaoflood's uc loader.
 
 ## Features
 
@@ -13,7 +13,7 @@ Firefox userChrome script. Tested on Firefox 91.
 - Show all browser tasks' (except tabs) CPU and memory bars on right side of tab bar. Including every addon, hidden tab, hidden task (removable widget)
 - Clicking above widget shows top tasks dynamically
 - Mouse hover shows more details
-- Optional periodically clean Firefox memory (manually enable it in the code)
+- Optional periodically clean Firefox memory  (experimental)
 
 ---------------------
 

@@ -3,10 +3,11 @@
  * Show addon cpu and memory bars on every addon toolbar button
  * Show all-task cpu and memory bars on a slender widget at the right of tab bar
  * Dynamically show top tasks on popup menu of the widget
- * Optional periodically clean Firefox memory 
- * Tested on Firefox 91
+ * 
+ * Tested on Firefox 102, with xiaoxiaoflood's uc loader
+ * 
  * Author: garywill (https://garywill.github.io)
- * https://github.com/garywill/firefoxtaskmonitor
+ *    https://github.com/garywill/firefoxtaskmonitor
  * 
  * Notice
  * This file contains code from Mozilla Firefox aboutPerformance.js
@@ -18,7 +19,7 @@
 // @include         main
 // ==/UserScript==
 
-console.log("taskmonitor.js");
+console.log("taskmonitor_part1.js");
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -28,16 +29,10 @@ console.log("taskmonitor.js");
 "use strict";
 
 var taskMonitorTimerID = null;
-var memoryCleanerTimerID = null;
 
 (() => {
 //=====================
 // User customization
-
-var periodicalClean = false; // if to periodically clean memory
-var cleanMemory_period = 20*60*1000; // milisecond
-
-//------------
 
 const    tabCpuColor = "#fd9191"; // red
 //const    tabMemColor = "rgb(242, 242, 0)"; //yellow
@@ -543,105 +538,7 @@ var State = {
 
 var View = {
     //wins: [],
-    widget_init() {
-        const fftm_widget_label = "TaskManager Widget for all tasks";
-        const fftm_widget_id = "fftm_widget";
-        if ( ! CustomizableUI.getWidget(fftm_widget_id) ) {
-            CustomizableUI.createWidget({
-                id: fftm_widget_id,
-                type: "custom",
-                defaultArea: CustomizableUI.AREA_TABSTRIP,
-                removable: true,
-                onBuild: function (doc) {
-                    let btn = doc.createXULElement('toolbarbutton');
-                    btn.id = fftm_widget_id;
-                    btn.label = fftm_widget_label;
-                    btn.tooltipText = fftm_widget_label;
-                    btn.type = 'menu';
-                    btn.className = 'toolbarbutton-1 chromeclass-toolbar-additional fftm_widget_class';
-                    btn.style.MozBoxAlign="unset";
-                    
-                    let mp = doc.createXULElement("menupopup");
-                    mp.id = 'fftm_widget_menupopup';
-                    mp.onclick = function(event) {  event.preventDefault()  ;} ;
-                
-                    const menu_show_tasks_num = 10;
-                    for (var i=0; i<menu_show_tasks_num ; i++)
-                    {
-                        var menuitem = doc.createXULElement("menuitem");
-                        menuitem.id = "fftm_widget_task_" + i;
-                        menuitem.label = "Top task " + (i+1) ;
-                        menuitem.className = 'menuitem-iconic fftm_widget_task' ;
-                        
-                        mp.appendChild(menuitem);
-                    }
-                    
-                    mp.appendChild(doc.createXULElement('menuseparator'));
-                
-                    var menu_open_about_performance = doc.createXULElement("menuitem");
-                    menu_open_about_performance.className = 'menuitem-iconic' ;
-                    menu_open_about_performance.label = "Open about:performance";
-                    menu_open_about_performance.onclick = function(event) {
-                        if (event.button == 0) {
-                            const win = Components.classes["@mozilla.org/appshell/window-mediator;1"].getService(Components.interfaces.nsIWindowMediator).getMostRecentWindow("navigator:browser");
-                            win.gBrowser.selectedTab = win.gBrowser.addTrustedTab('about:performance');
-                        }
-                    }
-                    mp.appendChild(menu_open_about_performance);
-                    
-                    var menu_open_about_processes = doc.createXULElement("menuitem");
-                    menu_open_about_processes.className = 'menuitem-iconic' ;
-                    menu_open_about_processes.label = "Open about:processes";
-                    menu_open_about_processes.onclick = function() {
-                        if (event.button == 0) {
-                            const win = Components.classes["@mozilla.org/appshell/window-mediator;1"].getService(Components.interfaces.nsIWindowMediator).getMostRecentWindow("navigator:browser");
-                            win.gBrowser.selectedTab = win.gBrowser.addTrustedTab('about:processes');
-                        }
-                    }
-                    mp.appendChild(menu_open_about_processes);
-                    
-                    var menu_open_about_memory = doc.createXULElement("menuitem");
-                    menu_open_about_memory.className = 'menuitem-iconic' ;
-                    menu_open_about_memory.label = "Open about:memory";
-                    menu_open_about_memory.onclick = function(event) {
-                        if (event.button == 0) {
-                            const win = Components.classes["@mozilla.org/appshell/window-mediator;1"].getService(Components.interfaces.nsIWindowMediator).getMostRecentWindow("navigator:browser");
-                            win.gBrowser.selectedTab = win.gBrowser.addTrustedTab('about:memory');
-                        }
-                    }
-                    mp.appendChild(menu_open_about_memory);
-                    
-                    mp.appendChild(doc.createXULElement('menuseparator'));
-                    
-                    var menu_donate = doc.createXULElement("menuitem");
-                    menu_donate.className = 'menuitem-iconic' ;
-                    menu_donate.label = "More scripts/Donate: Visit author";
-                    menu_donate.onclick = function(event) {
-                        if (event.button == 0) {
-                            const win = Components.classes["@mozilla.org/appshell/window-mediator;1"].getService(Components.interfaces.nsIWindowMediator).getMostRecentWindow("navigator:browser");
-                            win.gBrowser.selectedTab = win.gBrowser.addWebTab('https://github.com/garywill/receiving/blob/master/receiving_methods.md');
-                        }
-                    }
-                    mp.appendChild(menu_donate);
-                    
-                    btn.appendChild(mp);
-                    return btn;
-                }
-            });
-            const fftm_widget_css = Services.io.newURI("data:text/css;charset=utf-8," + encodeURIComponent(`
-            #${fftm_widget_id} .toolbarbutton-icon {
-                max-width: ${ (barWidth*2 + barGap) }px ！important ;
-                min-width: ${ (barWidth*2 + barGap) }px !important;
-                width: ${ (barWidth*2 + barGap) }px !important;
-            }
-            #${fftm_widget_id}:hover {
-                background-color: grey;
-            }
-            `
-            ), null, null);
-            sss.loadAndRegisterSheet(fftm_widget_css, sss.USER_SHEET);
-        }
-    },
+
     memoryAddUnit(memory) {
         let unit = "";
         let mem_united = "?";
@@ -1062,6 +959,37 @@ function open_about_performance() {
     win.gBrowser.selectedTab = win.gBrowser.addTrustedTab('about:performance');
 }
 //================================
+
+
+
+function TaskMonitorUpdate() {
+    /*
+    var wins = getAllWindows();
+    wins.forEach ( function(win, win_i) {
+        console.log("window index:", win_i, "tabs num:",
+            win.gBrowser.tabs.length );
+    });
+    */
+    
+    if (isThisTheFirstWindowInOpeningWindowsList() ){
+        //console.log("TaskMonitor refreshing");
+        wins = getAllWindows(); // wins is needed by updating bars
+        Control.update();
+    }else{
+        //console.log("TaskMonitor staling for not first window");
+    }
+        
+}
+
+function isThisTheFirstWindowInOpeningWindowsList() {
+    var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"]
+                    .getService(Components.interfaces.nsIWindowMediator);
+    var enumerator = wm.getEnumerator("navigator:browser");
+    var win = enumerator.getNext();
+    if (gBrowser === win.gBrowser){ //gBrowser is available only when no @onlyonce
+        return true;
+    } 
+}
 function getAllWindows() {
     var windows = [];
     
@@ -1077,30 +1005,6 @@ function getAllWindows() {
 }
 
 
-function TaskMonitorUpdate() {
-    /*
-    var wins = getAllWindows();
-    wins.forEach ( function(win, win_i) {
-        console.log("window index:", win_i, "tabs num:",
-            win.gBrowser.tabs.length );
-    });
-    */
-    var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"]
-                    .getService(Components.interfaces.nsIWindowMediator);
-    var enumerator = wm.getEnumerator("navigator:browser");
-    var win = enumerator.getNext();
-    if (gBrowser === win.gBrowser){
-        //console.log("TaskMonitor refreshing");
-        wins = getAllWindows();
-        Control.update();
-    }else{
-        //console.log("TaskMonitor staling for not first window");
-    }
-        
-}
-
-View.widget_init(); 
-
 async function startTaskMonitor() {
     if (taskMonitorTimerID) {
         console.log("TaskMonitor already running");
@@ -1111,23 +1015,11 @@ async function startTaskMonitor() {
 
     taskMonitorTimerID = window.setInterval(() => TaskMonitorUpdate(), UPDATE_INTERVAL_MS);
     //console.log("taskMonitorTimerID: ", taskMonitorTimerID);
-    
-    if ( periodicalClean ) {
-        memoryCleanerTimerID = window.setInterval(() => cleanMemory(), cleanMemory_period);
-    }
+
 };
 startTaskMonitor();
 
-function cleanMemory() {
-    Components.utils.schedulePreciseGC( function () {
-        const gMgr = Cc["@mozilla.org/memory-reporter-manager;1"].getService(
-            Ci.nsIMemoryReporterManager
-        );
-        
-        Services.obs.notifyObservers(null, "child-mmu-request");
-        gMgr.minimizeMemoryUsage( function() {} );
-    });
-}
+
 
 })();
 
@@ -1140,7 +1032,6 @@ function stopTaskMonitor() {
         memoryCleanerTimerID = null;
     }
 }
-
 
 
 
