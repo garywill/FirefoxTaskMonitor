@@ -94,7 +94,6 @@ function parseTbody(tbody)
 {
     let ps = [];
     
-    let lastWebPid = null;
     for (var iRow = 0; iRow<tbody.childNodes.length; iRow++) {
         const tr = tbody.childNodes[iRow];
         
@@ -106,17 +105,17 @@ function parseTbody(tbody)
         if (!td_name)
             continue
         const td_name_dataId = td_name.getAttribute("data-l10n-id");
+        const td_name_args = JSON.parse( td_name.getAttribute("data-l10n-args") );
         
+        // exclude hdslb pre web
         if (tr.classList.contains("window")  &&  td_name_dataId != "about-processes-tab-name" ) 
             continue;
         
-        let p = {};
         if (tr.classList.contains("process")) {
-            p.type = "process";
-            
+            let p = {};
             p.ptype = shortenFlname(td_name_dataId);
             
-            const td_name_args = JSON.parse( td_name.getAttribute("data-l10n-args") );
+            
             p.pid = td_name_args ['pid'] ;
             if ( td_name_args ['origin'] )
                 p.origin = td_name_args ['origin'];
@@ -131,24 +130,14 @@ function parseTbody(tbody)
                 p.mem =  args['total'].toFixed(1) + args['totalUnit'];
             }
             
-            if (p.type == "process"  &&  ['web', 'webIs'].includes(p.ptype) ) {
-                lastWebPid = p.pid;
-            } else {
-                lastWebPid = null;
-            }
+            if (['web', 'webIs'].includes(p.ptype) ) 
+                p.webs = [];
+            
+            ps.push(p);
         } 
-        else if (tr.classList.contains("window") && lastWebPid > 0) {
-                
-            p.type = "tab";
-            p.pid = lastWebPid;
-            
-            
-            const td_name_args = JSON.parse( td_name.getAttribute("data-l10n-args") );
-            p.webTitle = td_name_args ['name'];
-
-            
+        else if (tr.classList.contains("window") ) {
+            ps [ps.length-1] .webs.push(td_name_args ['name']);
         } 
-        ps.push(p);
     }
     return ps;
 }
