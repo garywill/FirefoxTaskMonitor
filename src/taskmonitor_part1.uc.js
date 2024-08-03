@@ -91,8 +91,7 @@ function parseTbody(tbody)
                 p.mem =  args['total'].toFixed(1) + args['totalUnit'];
             }
             
-            if (['web', 'webIs'].includes(p.ptype) ) 
-                p.webs = [];
+            p.webs = [];
             
             ps.push(p);
         } 
