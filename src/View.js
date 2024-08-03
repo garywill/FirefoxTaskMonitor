@@ -599,5 +599,5 @@ var View = {
             amount: value,
         };
     },
-     };
+};
      
