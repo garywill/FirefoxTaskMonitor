@@ -213,7 +213,7 @@ function calcPsTotalCpuMem(ps)
         if (!insertNode) return;
  
         var tabAllBarsCont;
-        tabAllBarsCont = this.createVertRightEdgeCont(insertNode,  "taskMonitor-TabbtnP",
+        tabAllBarsCont = createVertRightEdgeCont(insertNode,  "taskMonitor-TabbtnP",
             {
                 position: "absolute",
                 display: "block",
