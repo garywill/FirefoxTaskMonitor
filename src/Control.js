@@ -1,3 +1,4 @@
+   
 var Control = {
     // The set of all processes reported as "hung" by the process hang monitor.
     //
@@ -5,16 +6,7 @@ var Control = {
     _hungItems: new Set(),
     _sortColumn: null,
     _sortAscendent: true,
-    _removeSubtree(row) {
-        let sibling = row.nextSibling;
-        while (sibling && !sibling.classList.contains("process")) {
-            let next = sibling.nextSibling;
-            if (sibling.classList.contains("thread")) {
-                View._removeRow(sibling);
-            }
-            sibling = next;
-        }
-    },
+
     init() {
         this._initHangReports();
         
@@ -45,109 +37,9 @@ var Control = {
         
         let tbody = document.getElementById("process-tbody");
         
-        // Single click:
-        // - show or hide the contents of a twisty;
-        // - close a process;
-        // - profile a process;
-        // - change selection.
-        tbody.addEventListener("click", event => {
-            this._updateLastMouseEvent();
-            
-            this._handleActivate(event.target);
-        });
-        
-        // Enter or Space keypress:
-        // - show or hide the contents of a twisty;
-        // - close a process;
-        // - profile a process;
-        // - change selection.
-        tbody.addEventListener("keypress", event => {
-            // Handle showing or hiding subitems of a row, when keyboard is used.
-            if (event.key === "Enter" || event.key === " ") {
-                this._handleActivate(event.target);
-            }
-        });
-        
-        // Double click:
-        // - navigate to tab;
-        // - navigate to about:addons.
-        tbody.addEventListener("dblclick", event => {
-            this._updateLastMouseEvent();
-            event.stopPropagation();
-            
-            // Bubble up the doubleclick manually.
-            for (
-                let target = event.target;
-            target && target.getAttribute("id") != "process-tbody";
-            target = target.parentNode
-            ) {
-                if (target.classList.contains("tab")) {
-                    // We've clicked on a tab, navigate.
-                    let { tab, tabbrowser } = target.parentNode.win.tab;
-                    tabbrowser.selectedTab = tab;
-                    tabbrowser.ownerGlobal.focus();
-                    return;
-                }
-                if (target.classList.contains("extensions")) {
-                    // We've clicked on the extensions process, open or reuse window.
-                    let parentWin =
-                    window.docShell.browsingContext.embedderElement.ownerGlobal;
-                    parentWin.BrowserAddonUI.openAddonsMgr();
-                    return;
-                }
-                // Otherwise, proceed.
-            }
-        });
-        
-        tbody.addEventListener("mousemove", () => {
-            this._updateLastMouseEvent();
-        });
-        
-        // Visibility change:
-        // - stop updating while the user isn't looking;
-        // - resume updating when the user returns.
-        window.addEventListener("visibilitychange", () => {
-            if (!document.hidden) {
-                this._updateDisplay(true);
-            }
-        });
-        
-        document
-        .getElementById("process-thead")
-        .addEventListener("click", async event => {
-            if (!event.target.classList.contains("clickable")) {
-                return;
-            }
-            // Linux has conventions opposite to Windows and macOS on the direction of arrows
-            // when sorting.
-            const platformIsLinux = AppConstants.platform == "linux";
-            const ascArrow = platformIsLinux ? "arrow-up" : "arrow-down";
-            const descArrow = platformIsLinux ? "arrow-down" : "arrow-up";
-            
-            if (this._sortColumn) {
-                const td = document.getElementById(this._sortColumn);
-                td.classList.remove(ascArrow, descArrow);
-            }
-            
-            const columnId = event.target.id;
-            if (columnId == this._sortColumn) {
-                // Reverse sorting order.
-                this._sortAscendent = !this._sortAscendent;
-            } else {
-                this._sortColumn = columnId;
-                this._sortAscendent = true;
-            }
-            
-            event.target.classList.toggle(ascArrow, this._sortAscendent);
-            event.target.classList.toggle(descArrow, !this._sortAscendent);
-            
-            await this._updateDisplay(true);
-        });
+
     },
-    _lastMouseEvent: 0,
-    _updateLastMouseEvent() {
-        this._lastMouseEvent = Date.now();
-    },
+
     _initHangReports() {
         const PROCESS_HANG_REPORT_NOTIFICATION = "process-hang-report";
         
@@ -157,26 +49,11 @@ var Control = {
             report.QueryInterface(Ci.nsIHangReport);
             this._hungItems.add(report.childID);
         };
-        Services.obs.addObserver(hangReporter, PROCESS_HANG_REPORT_NOTIFICATION);
         
-        // Don't forget to unregister the reporter.
-        window.addEventListener(
-            "unload",
-            () => {
-                Services.obs.removeObserver(
-                    hangReporter,
-                    PROCESS_HANG_REPORT_NOTIFICATION
-                );
-            },
-            { once: true }
-        );
+
     },
     async update(force = false) {
         await State.update(force);
-        
-        if (document.hidden) {
-            return;
-        }
         
         await this._updateDisplay(force);
     },
@@ -241,19 +118,7 @@ var Control = {
             previousProcess = process;
         }
         
-        if (
-            !force &&
-            Date.now() - this._lastMouseEvent < TIME_BEFORE_SORTING_AGAIN
-        ) {
-            // If there has been a recent mouse event, we don't want to reorder,
-            // add or remove rows so that the table content under the mouse pointer
-            // doesn't change when the user might be about to click to close a tab
-            // or kill a process.
-            // We didn't return earlier because updating CPU and memory values is
-            // still valuable.
-            View.discardUpdate();
-            return;
-        }
+
         
         View.commit();
         
@@ -263,8 +128,6 @@ var Control = {
             this.selectedRow = null;
         }
         
-        // Used by tests to differentiate full updates from l10n updates.
-        document.dispatchEvent(new CustomEvent("AboutProcessesUpdated"));
     },
     _compareCpu(a, b) {
         return (
@@ -398,138 +261,9 @@ var Control = {
         }
     },
     
-    // Handle events on image controls.
-    _handleActivate(target) {
-        if (target.classList.contains("twisty")) {
-            this._handleTwisty(target);
-            return;
-        }
-        if (target.classList.contains("close-icon")) {
-            this._handleKill(target);
-            return;
-        }
-        
-        if (target.classList.contains("profiler-icon")) {
-            this._handleProfiling(target);
-            return;
-        }
-        
-        this._handleSelection(target);
-    },
+
     
-    // Open/close list of threads.
-    _handleTwisty(target) {
-        let row = target.parentNode.parentNode;
-        if (target.classList.toggle("open")) {
-            target.setAttribute("aria-expanded", "true");
-            this._showThreads(row, this._maxSlopeCpu);
-            View.insertAfterRow(row);
-        } else {
-            target.setAttribute("aria-expanded", "false");
-            this._removeSubtree(row);
-        }
-    },
-    
-    // Kill process/close tab/close subframe.
-    _handleKill(target) {
-        let row = target.parentNode;
-        if (row.process) {
-            // Kill process immediately.
-            let pid = row.process.pid;
-            
-            // Make sure that the user can't click twice on the kill button.
-            // Otherwise, chaos might ensue. Plus we risk crashing under Windows.
-            View._killedRecently.push({ pid });
-            
-            // Discard tab contents and show that the process and all its contents are getting killed.
-            row.classList.add("killing");
-            for (
-                let childRow = row.nextSibling;
-            childRow && !childRow.classList.contains("process");
-            childRow = childRow.nextSibling
-            ) {
-                childRow.classList.add("killing");
-                let win = childRow.win;
-                if (win) {
-                    View._killedRecently.push({ pid: win.outerWindowId });
-                    if (win.tab && win.tab.tabbrowser) {
-                        win.tab.tabbrowser.discardBrowser(
-                            win.tab.tab,
-                            /* aForceDiscard = */ true
-                        );
-                    }
-                }
-            }
-            
-            // Finally, kill the process.
-            const ProcessTools = Cc["@mozilla.org/processtools-service;1"].getService(
-                Ci.nsIProcessToolsService
-            );
-            ProcessTools.kill(pid);
-        } else if (row.win && row.win.tab && row.win.tab.tabbrowser) {
-            // This is a tab, close it.
-            row.win.tab.tabbrowser.removeTab(row.win.tab.tab, {
-                skipPermitUnload: true,
-                animate: true,
-            });
-            View._killedRecently.push({ outerWindowId: row.win.outerWindowId });
-            row.classList.add("killing");
-            
-            // If this was the only root window of the process, show that the process is also getting killed.
-            if (row.previousSibling.classList.contains("process")) {
-                let parentRow = row.previousSibling;
-                let roots = 0;
-                for (let win of parentRow.process.windows) {
-                    if (win.isProcessRoot) {
-                        roots += 1;
-                    }
-                }
-                if (roots <= 1) {
-                    // Yes, we're the only process root, so the process is dying.
-                    //
-                    // It might actually become a preloaded process rather than
-                    // dying. That's an acceptable error. Even if we display incorrectly
-                    // that the process is dying, this error will last only one refresh.
-                    View._killedRecently.push({ pid: parentRow.process.pid });
-                    parentRow.classList.add("killing");
-                }
-            }
-        }
-    },
-    
-    // Handle profiling of a process.
-    _handleProfiling(target) {
-        if (Services.profiler.IsActive()) {
-            return;
-        }
-        Services.profiler.StartProfiler(
-            10000000,
-            1,
-            ["default", "ipcmessages", "power"],
-            ["pid:" + target.parentNode.parentNode.process.pid]
-        );
-        target.classList.add("profiler-active");
-        setTimeout(() => {
-            ProfilerPopupBackground.captureProfile("aboutprofiling");
-            target.classList.remove("profiler-active");
-        }, PROFILE_DURATION * 1000);
-    },
-    
-    // Handle selection changes.
-    _handleSelection(target) {
-        let row = target.closest("tr");
-        if (!row) {
-            return;
-        }
-        if (this.selectedRow) {
-            this.selectedRow.removeAttribute("selected");
-            if (this.selectedRow.rowId == row.rowId) {
-                // Clicking the same row again clears the selection.
-                this.selectedRow = null;
-                return;
-            }
-        }
-        row.setAttribute("selected", "true");
-        this.selectedRow = row;
-    },
-}; 
+
+
+  
+};
