@@ -9,32 +9,6 @@ var Control = {
 
     init() {
         this._initHangReports();
-        
-        // Start prefetching units.
-        this._promisePrefetchedUnits = (async function () {
-            let [ns, us, ms, s, m, h, d, B, KB, MB, GB, TB, PB, EB] =
-            await document.l10n.formatValues([
-                { id: "duration-unit-ns" },
-                { id: "duration-unit-us" },
-                { id: "duration-unit-ms" },
-                { id: "duration-unit-s" },
-                { id: "duration-unit-m" },
-                { id: "duration-unit-h" },
-                { id: "duration-unit-d" },
-                { id: "memory-unit-B" },
-                { id: "memory-unit-KB" },
-                { id: "memory-unit-MB" },
-                { id: "memory-unit-GB" },
-                { id: "memory-unit-TB" },
-                { id: "memory-unit-PB" },
-                { id: "memory-unit-EB" },
-            ]);
-            return {
-                duration: { ns, us, ms, s, m, h, d },
-                memory: { B, KB, MB, GB, TB, PB, EB },
-            };
-        })();
-
     },
 
     _initHangReports() {
@@ -59,10 +33,6 @@ var Control = {
     // moved recently.
     async _updateDisplay(force = false) {
         let counters = State.getCounters();
-        if (this._promisePrefetchedUnits) {
-            gLocalizedUnits = await this._promisePrefetchedUnits;
-            this._promisePrefetchedUnits = null;
-        }
         
         // We reset `_hungItems`, based on the assumption that the process hang
         // monitor will inform us again before the next update. Since the process hang monitor
