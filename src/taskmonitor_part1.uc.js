@@ -39,9 +39,9 @@ const    tabMemColor = "rgb(100, 160, 255)"; //blue
 const    tabMemMax = 300*1000*1000;
 //const    tabBarsTransp
 const    allCpuColor = tabCpuColor;
-const    allCpuMax = 100;
+const    allCpuMax = 200;
 const    allMemColor = tabMemColor;
-const    allMemMax = 1000*1000*1000;
+const    allMemMax = 1500*1000*1000;
 //const    allBarsTransp
 
 //=======================
@@ -88,7 +88,8 @@ function parseTbody(tbody)
             const td_mem = tr.childNodes[1]?.classList.contains("memory") ? tr.childNodes[1] : undefined;
             if (td_mem) {
                 const args = JSON.parse( td_mem.getAttribute("data-l10n-args") );
-                p.mem =  args['total'].toFixed(1) + args['totalUnit'];
+                p.mem_united =  args['total'].toFixed(1) + args['totalUnit'];
+                p.mem = memStrToByte(p.mem_united);
             }
             
             p.webs = [];
@@ -120,7 +121,7 @@ function psToMTextArr(ps)
             ptext_str = p.ptype;
         }
         
-        var pline = `${cpu_str}\t${p.mem}\t${ptext_str}\t${p.pid}`;
+        var pline = `${cpu_str}\t${p.mem_united}\t${ptext_str}\t${p.pid}`;
         
         if (Array.isArray(p.webs)) {
             for (var webtitle of p.webs) {
@@ -164,9 +165,43 @@ function shortenFlname(fluentName) {
 }  
 
 
+function memStrToByte(sizeStr) {  
+    const match = sizeStr.trim().match(/^(\d+(\.\d+)?)\s*([KMG]?)B?$/i);  
+    if (!match) {  
+        console.error("Invalid memory size string", sizeStr);
+        return;
+    }  
+    
+    const [, numberStr, , unit = ''] = match;
+    const number = parseFloat(numberStr);  
+    
+    switch (unit.toUpperCase()) {  
+        case 'K':  
+            return number * ONE_KILO;  
+        case 'M':  
+            return number * ONE_MEGA;  
+        case 'G':  
+            return number * ONE_GIGA;  
+        case '': 
+        default:  
+            return number;  
+    }  
+}  
+
+function calcPsTotalCpuMem(ps)
+{
+    var result = { cpu:0, mem: 0};
+    for (var p of ps) {
+        if (typeof p.cpu === 'number')
+            result.cpu += p.cpu;
+        if (typeof p.mem === 'number')
+            result.mem += p.mem;
+    }
+    return result;
+}
+
 
 let wins = [];
-
 
 
 
@@ -375,12 +410,19 @@ async function TaskMonitorUpdate() {
     if (isThisTheFirstWindowInOpeningWindowsList() ){
         //console.log("TaskMonitor refreshing");
         wins = getAllWindows(); // wins is needed by updating bars
-        Control.update();
+        
+        var tbody = await Control.update(true);
+        var ps = parseTbody(tbody);
+        var mtext_arr = psToMTextArr(ps) ;
+        var mtext_tooltip = mtext_arr.join('\n');
+        var totalCpuMem = calcPsTotalCpuMem(ps);
+        addCpuMem2whole(totalCpuMem.cpu, totalCpuMem.mem, mtext_tooltip);
     }else{
         //console.log("TaskMonitor staling for not first window");
     }
         
 }
+
 
 function isThisTheFirstWindowInOpeningWindowsList() {
     var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"]
