@@ -98,7 +98,9 @@ function parseTbody(tbody)
         } 
         else if (tr.classList.contains("window") ) { 
             try{
-                ps [ps.length-1] .webs.push(td_name_args ['name']);
+                ps [ps.length-1] .webs.push( {
+                    title: td_name_args ['name'] ,
+                } );
             }catch(err){ 
                 console.error(err);
             }
@@ -124,7 +126,8 @@ function psToMTextArr(ps)
         var pline = `${cpu_str}\t${p.mem_united}\t${ptext_str}\t${p.pid}`;
         
         if (Array.isArray(p.webs)) {
-            for (var webtitle of p.webs) {
+            for (var web of p.webs) {
+                const webtitle = web.title;
                 var tabline = `　└ ${webtitle}`;
                 pline += "\n" + tabline;
             }
