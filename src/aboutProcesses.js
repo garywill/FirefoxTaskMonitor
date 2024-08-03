@@ -142,7 +142,7 @@ function parseTbody(tbody)
     return ps;
 }
 
-function psToMText(ps) 
+function psToMTextArr(ps) 
 {
     let arr_mtext = [];
     for (let p of ps)
@@ -157,16 +157,18 @@ function psToMText(ps)
         }
         
         var pline = `${cpu_str}\t${p.mem}\t${ptext_str}\t${p.pid}`;
-        arr_mtext.push(pline)
         
         if (Array.isArray(p.webs)) {
             for (var webtitle of p.webs) {
                 var tabline = `└${webtitle}`;
-                arr_mtext.push(tabline);
+                pline += "\n" + tabline;
             }
         }
+        
+        arr_mtext.push(pline)
     }
-    return arr_mtext.join('\r\n');
+    return arr_mtext;
+}
 }
 const fluentNameToDataType = {  
     "about-processes-web-process": "web",  
