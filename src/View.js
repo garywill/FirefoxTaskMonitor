@@ -241,23 +241,6 @@ var View = {
             }
             
             let processNameElement = nameCell;
-            if (SHOW_PROFILER_ICONS) {
-                if (!nameCell.firstChild) {
-                    processNameElement = document.createElement("span");
-                    nameCell.appendChild(processNameElement);
-                    
-                    let profilerIcon = document.createElement("span");
-                    profilerIcon.className = "profiler-icon";
-                    document.l10n.setAttributes(
-                        profilerIcon,
-                        "about-processes-profile-process",
-                        { duration: PROFILE_DURATION }
-                    );
-                    nameCell.appendChild(profilerIcon);
-                } else {
-                    processNameElement = nameCell.firstChild;
-                }
-            }
             document.l10n.setAttributes(processNameElement, fluentName, fluentArgs);
             nameCell.className = ["type", "favicon", ...classNames].join(" ");
             nameCell.setAttribute("id", data.pid + "-label");

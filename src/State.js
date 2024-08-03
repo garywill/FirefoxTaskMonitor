@@ -156,9 +156,6 @@ var State = {
             result.title = titles[0];
         }
         if (!prev) {
-            if (SHOW_THREADS) {
-                result.threads = cur.threads.map(data => this._getThreadDelta(data));
-            }
             return result;
         }
         if (prev.pid != cur.pid) {
@@ -166,15 +163,7 @@ var State = {
         }
         let deltaT = (cur.date - prev.date) * NS_PER_MS;
         let threads = null;
-        if (SHOW_THREADS) {
-            let prevThreads = new Map();
-            for (let thread of prev.threads) {
-                prevThreads.set(thread.tid, thread);
-            }
-            threads = cur.threads.map(curThread =>
-            this._getThreadDelta(curThread, prevThreads.get(curThread.tid), deltaT)
-            );
-        }
+        
         result.deltaRamSize = cur.memory - prev.memory;
         result.slopeCpu = (cur.cpuTime - prev.cpuTime) / deltaT;
         result.active = !!result.slopeCpu || cur.cpuCycleCount > prev.cpuCycleCount;

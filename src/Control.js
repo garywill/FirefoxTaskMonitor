@@ -90,7 +90,7 @@ var Control = {
             if (process.type != "extension") {
                 // We do not want to display extensions.
                 for (let win of process.windows) {
-                    if (SHOW_ALL_SUBFRAMES || win.tab || win.isProcessRoot) {
+                    if (win.tab || win.isProcessRoot) {
                         View.displayDOMWindowRow(win, process);
                     }
                 }
@@ -102,11 +102,7 @@ var Control = {
                 }
             }
             
-            if (SHOW_THREADS) {
-                if (View.displayThreadSummaryRow(process)) {
-                    this._showThreads(processRow, this._maxSlopeCpu);
-                }
-            }
+
             if (
                 this._sortColumn == null &&
                 previousProcess &&
