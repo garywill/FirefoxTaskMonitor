@@ -26,7 +26,7 @@ console.log("taskmonitor_part1.js");
 
 "use strict";
 
-var taskMonitorTimerID = null;
+let taskMonitorTimerID = null;
 
 (() => {
 //=====================
@@ -54,6 +54,7 @@ const    allMemMax = 1000*1000*1000;
 const barWidth = 3;
 const barGap = 1;
 
+#include "aboutProcesses.js"
 
 function parseTbody(tbody) 
 {
@@ -165,17 +166,17 @@ function shortenFlname(fluentName) {
 }  
 
 
-var wins = [];
+
+let wins = [];
 
 
 
-var View = {
-    //wins: [],
 
 
 
  
-    addCpuMem2Tabbtn(tabNode, taskInfo, hide=false){
+    function addCpuMem2Tabbtn(tabNode, taskInfo, hide=false)
+    {
         var insertNode = tabNode.getElementsByClassName("tab-content")[0];
         if (!insertNode) return;
  
@@ -225,8 +226,10 @@ var View = {
         
         //var ttp = `CPU ${taskInfo.cpu}\nMEM ${taskInfo.mem_united}\nPID ${taskInfo.pid}`;
         //tabNode.getElementsByClassName("tab-icon-image")[0].tooltipText = ttp;
-    },
-    addCpuMem2AddonBtn(addonId, taskInfo){
+    }
+    
+    function addCpuMem2AddonBtn(addonId, taskInfo)
+    {
         wins.forEach( function(win, win_i) {
             //var _btnNode = document.getElementsByAttribute("data-extensionid",addonId)[0];
             var _btnNode = win.document.body.getElementsByAttribute("data-extensionid",addonId)[0];
@@ -257,8 +260,10 @@ var View = {
             View.addBarsToNode(BABarsCont, taskInfo.cpu, taskInfo.mem,  {cpuColor: addonCpuColor, memColor: addonMemColor, cpuMax: addonCpuMax, memMax: addonMemMax}, taskInfo);
         });
       
-    },
-    addCpuMem2whole(cpu, mem, tooltip){
+    }
+    
+    function addCpuMem2whole(cpu, mem, tooltip)
+    {
        
         var arr_tooltip_split = tooltip.split('\n');
         
@@ -312,10 +317,11 @@ var View = {
                     
             }
         });
-    },
+    }
     
  
-    createVertRightEdgeCont(BrowserNode, pname, PStyle, CStyle, hide=false){
+    function createVertRightEdgeCont(BrowserNode, pname, PStyle, CStyle, hide=false)
+    {
         var contParent = BrowserNode.getElementsByClassName(pname)[0];
         
         if (hide && contParent)
@@ -352,9 +358,10 @@ var View = {
         }
         
         return cont;
-    },
+    }
  
-    addBarsToNode(node, cpu, memory, ui, taskInfo) {
+    function addBarsToNode(node, cpu, memory, ui, taskInfo) 
+    {
         if (ui.rightBlank === undefined)  ui.rightBlank = 0;
         
         var cpubar;
@@ -390,8 +397,8 @@ var View = {
         if (taskInfo){
             node.tooltipText = `CPU ${taskInfo.cpu}\nMEM ${taskInfo.mem_united}\nPID ${taskInfo.pid}`
         }
-    },
-};
+    }
+
 
 
 
