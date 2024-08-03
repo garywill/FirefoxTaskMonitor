@@ -19,6 +19,9 @@ console.log("taskmonitor_part2.js");
 "use strict";
 
 (() => {
+    const menu_show_tasks_num = 12;
+    
+    
     const barGap = 1;
     const barWidth = 3;
     
@@ -27,7 +30,7 @@ console.log("taskmonitor_part2.js");
     widget_init();
     
     function widget_init() {
-        const fftm_widget_label = "TaskManager Widget for all tasks";
+        const fftm_widget_label = "TaskManager Widget";
         const fftm_widget_id = "fftm_widget";
         
         Components.utils.import("resource:///modules/CustomizableUI.jsm");
@@ -51,12 +54,12 @@ console.log("taskmonitor_part2.js");
                     mp.id = 'fftm_widget_menupopup';
                     mp.onclick = function(event) {  event.preventDefault()  ;} ;
                 
-                    const menu_show_tasks_num = 10;
+                    
                     for (var i=0; i<menu_show_tasks_num ; i++)
                     {
                         var menuitem = doc.createXULElement("menuitem");
                         menuitem.id = "fftm_widget_task_" + i;
-                        menuitem.label = "Top task " + (i+1) ;
+                        menuitem.label = "Task " + (i+1) ;
                         menuitem.className = 'menuitem-iconic fftm_widget_task' ;
                         
                         mp.appendChild(menuitem);
@@ -92,7 +95,7 @@ console.log("taskmonitor_part2.js");
                     
                     var menu_donate = doc.createXULElement("menuitem");
                     menu_donate.className = 'menuitem-iconic' ;
-                    menu_donate.label = "More scripts / Donate: Visit author";
+                    menu_donate.label = "More scripts / Visit author";
                     menu_donate.onclick = function(event) {
                         if (event.button == 0) {
                             const win = Components.classes["@mozilla.org/appshell/window-mediator;1"].getService(Components.interfaces.nsIWindowMediator).getMostRecentWindow("navigator:browser");
