@@ -34,9 +34,6 @@ var Control = {
                 memory: { B, KB, MB, GB, TB, PB, EB },
             };
         })();
-        
-        let tbody = document.getElementById("process-tbody");
-        
 
     },
 
