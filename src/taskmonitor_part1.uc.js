@@ -406,10 +406,10 @@ let wins = [];
 
 async function TaskMonitorUpdate() {
 
+    wins = getAllWindows(); // wins is needed by updating bars
     
     if (isThisTheFirstWindowInOpeningWindowsList() ){
         //console.log("TaskMonitor refreshing");
-        wins = getAllWindows(); // wins is needed by updating bars
         
         var tbody = await Control.update(true);
         var ps = parseTbody(tbody);
@@ -439,6 +439,12 @@ async function TaskMonitorUpdate() {
                 }
             }
         }
+        wins.forEach( function(win, win_i) {
+            win.document.body.querySelectorAll("tab[pending=true]").forEach( function(tabnode) {
+                addCpuMem2Tabbtn(tabnode, {cpu:0, mem:0, mem_united:"", pid:0, pmtext: null}, true);
+            });
+        });
+
         
     }else{
         //console.log("TaskMonitor staling for not first window");
