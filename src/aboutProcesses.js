@@ -22,12 +22,12 @@ const ONE_GIGA = 1024 * 1024 * 1024;
 const ONE_MEGA = 1024 * 1024;
 const ONE_KILO = 1024;
 
-const { XPCOMUtils } = ChromeUtils.importESModule(
-    "resource://gre/modules/XPCOMUtils.sys.mjs"
-);
-const { AppConstants } = ChromeUtils.importESModule(
-    "resource://gre/modules/AppConstants.sys.mjs"
-);
+// const { XPCOMUtils } = ChromeUtils.importESModule(
+//     "resource://gre/modules/XPCOMUtils.sys.mjs"
+// );
+// const { AppConstants } = ChromeUtils.importESModule(
+//     "resource://gre/modules/AppConstants.sys.mjs"
+// );
 
 ChromeUtils.defineESModuleGetters(this, {
     ContextualIdentityService:
