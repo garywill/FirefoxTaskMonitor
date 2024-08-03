@@ -28,14 +28,12 @@ var memoryCleanerTimerID;
     function cleanMemory() {
 
         if (isThisTheFirstWindowInOpeningWindowsList() ){
-            Components.utils.schedulePreciseGC( function () {
-                const gMgr = Cc["@mozilla.org/memory-reporter-manager;1"].getService(
-                    Ci.nsIMemoryReporterManager
-                );
-                
-                Services.obs.notifyObservers(null, "child-mmu-request");
-                gMgr.minimizeMemoryUsage( function() {} );
-            });
+            const gMgr = Cc["@mozilla.org/memory-reporter-manager;1"].getService(
+                Ci.nsIMemoryReporterManager
+            );
+            
+            Services.obs.notifyObservers(null, "child-mmu-request");
+            gMgr.minimizeMemoryUsage( function() {console.log("minimizeMemoryUsage");} );
         } 
     }
 

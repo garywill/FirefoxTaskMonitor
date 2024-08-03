@@ -91,6 +91,21 @@ console.log("taskmonitor_part2.js");
                     }
                     mp.appendChild(menu_open_about_memory);
                     
+                    var menu_minimize_memory = doc.createXULElement("menuitem");
+                    menu_minimize_memory.className = 'menuitem-iconic' ;
+                    menu_minimize_memory.label = "Minimize memory usage";
+                    menu_minimize_memory.onclick = function(event) {
+                        if (event.button == 0) {
+                            const gMgr = Cc["@mozilla.org/memory-reporter-manager;1"].getService(
+                                Ci.nsIMemoryReporterManager
+                            );
+                            
+                            Services.obs.notifyObservers(null, "child-mmu-request");
+                            gMgr.minimizeMemoryUsage( function() {console.log("minimizeMemoryUsage");} );
+                        }
+                    }
+                    mp.appendChild(menu_minimize_memory);
+                    
                     mp.appendChild(doc.createXULElement('menuseparator'));
                     
                     var menu_donate = doc.createXULElement("menuitem");
