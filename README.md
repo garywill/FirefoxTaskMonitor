@@ -1,18 +1,21 @@
 # Firefox TaskMonitor
 
-Show CPU &amp; memory bars, per tab, per addon, and all tasks. 
+Show CPU &amp; memory bars and usage.
 
 ![screenshot](https://s1.ax1x.com/2020/07/18/UcsPLF.jpg)
 
-Firefox userChrome script. Tested on Firefox 102, with xiaoxiaoflood's uc loader.
+Firefox userChrome script. Tested on Firefox 128, with xiaoxiaoflood's uc loader.
+
+## Usage
+
+Download `.uc.js` files from `dist/` folder.
 
 ## Features
 
-- Show every tab's CPU and memory usage: bars on every tab button
-- Show every addon's CPU and memory usage: bars on every every addon's toolbar button (if it has)
-- Show all browser tasks' (except tabs) CPU and memory bars on right side of tab bar. Including every addon, hidden tab, hidden task (removable widget)
-- Clicking above widget shows top tasks dynamically
-- Mouse hover shows more details
+- Show every tab's CPU and memory usage (bars on every tab button)
+- Show browser CPU and memory bars on right side of tab bar (removable widget)
+    - Clicking widget shows processes info dynamically in popup
+- Mouse hover shows more details (CPU, memory, PID, host ...)
 - Optional periodically clean Firefox memory  (experimental)
 
 ---------------------
