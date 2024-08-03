@@ -61,7 +61,11 @@ const PROFILE_DURATION = Math.max(
   *   memory: { B: String, KB: String, MB: String, GB: String, TB: String, PB: String, EB: String }
   * }.
   */
-let gLocalizedUnits;
+let gLocalizedUnits = 
+{
+    "duration": { "ns": "ns", "us": "µs", "ms": "ms", "s": "s", "m": "m", "h": "h", "d": "d" },
+    "memory": { "B": "B", "KB": "KB", "MB": "MB", "GB": "GB", "TB": "TB", "PB": "PB", "EB": "EB" }
+};
 
 #include "tabFinder.js"
 
