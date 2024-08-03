@@ -122,7 +122,7 @@ function parseTbody(tbody)
             
             const td_cpu = tr.querySelector("td[data-l10n-id='about-processes-cpu']");
             if (td_cpu)
-                p.cpu = JSON.parse( td_cpu.getAttribute("data-l10n-args") ) ['percent'] ;
+                p.cpu = JSON.parse( td_cpu.getAttribute("data-l10n-args") ) ['percent'] *100 ;
             
             const td_mem = tr.childNodes[1]?.classList.contains("memory") ? tr.childNodes[1] : undefined;
             if (td_mem) {
@@ -142,6 +142,32 @@ function parseTbody(tbody)
     return ps;
 }
 
+function psToMText(ps) 
+{
+    let arr_mtext = [];
+    for (let p of ps)
+    {
+        var cpu_str = (typeof p.cpu === 'number' && p.cpu !== NaN) ? Math.round(p.cpu) : '?';
+        
+        var ptext_str;
+        if ( ['web', 'webIs'].includes(p.ptype) ) {
+            ptext_str = p.origin;
+        }else{
+            ptext_str = p.ptype;
+        }
+        
+        var pline = `${cpu_str}\t${p.mem}\t${ptext_str}\t${p.pid}`;
+        arr_mtext.push(pline)
+        
+        if (Array.isArray(p.webs)) {
+            for (var webtitle of p.webs) {
+                var tabline = `└${webtitle}`;
+                arr_mtext.push(tabline);
+            }
+        }
+    }
+    return arr_mtext.join('\r\n');
+}
 const fluentNameToDataType = {  
     "about-processes-web-process": "web",  
     "about-processes-web-isolated-process": "webIs",  
