@@ -71,25 +71,6 @@ let gLocalizedUnits =
 
 #include "Control.js"
 
-
-
-
-window.onload = async function () {
-    Control.init();
-
-    // Display immediately the list of processes. CPU values will be missing.
-    await Control.update();
-
-    // After the minimum interval between samples, force an update to show
-    // valid CPU values asap.
-    await new Promise(resolve =>
-        setTimeout(resolve, MINIMUM_INTERVAL_BETWEEN_SAMPLES_MS)
-    );
-    await Control.update(true);
-
-    // Then update at the normal frequency.
-    window.setInterval(() => Control.update(), UPDATE_INTERVAL_MS);
-};
 function parseTbody(tbody) 
 {
     let ps = [];
