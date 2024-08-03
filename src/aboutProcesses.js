@@ -1,5 +1,5 @@
 
-"use strict";
+
 
 // Time in ms before we start changing the sort order again after receiving a
 // mousemove event.
@@ -42,22 +42,8 @@ ChromeUtils.defineLazyGetter(this, "ProfilerPopupBackground", function () {
 
 const { WebExtensionPolicy } = Cu.getGlobalForObject(Services);
 
-const PROFILE_DURATION = Math.max(
-    1,
-    Services.prefs.getIntPref("toolkit.aboutProcesses.profileDuration")
-);
 
-/**
-  * For the time being, Fluent doesn't support duration or memory formats, so we need
-  * to fetch units from Fluent. To avoid re-fetching at each update, we prefetch these
-  * units during initialization, asynchronously, and keep them.
-  *
-  * @type {
-  *   duration: { ns: String, us: String, ms: String, s: String, m: String, h: String, d: String },
-  *   memory: { B: String, KB: String, MB: String, GB: String, TB: String, PB: String, EB: String }
-  * }.
-  */
-let gLocalizedUnits = 
+const gLocalizedUnits = 
 {
     "duration": { "ns": "ns", "us": "µs", "ms": "ms", "s": "s", "m": "m", "h": "h", "d": "d" },
     "memory": { "B": "B", "KB": "KB", "MB": "MB", "GB": "GB", "TB": "TB", "PB": "PB", "EB": "EB" }
