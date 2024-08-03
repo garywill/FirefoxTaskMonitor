@@ -1,7 +1,6 @@
 var View = {
     commit() {
-        let tbody = document.getElementById("process-tbody");
-        
+        let tbody = document.createElement("table").appendChild(document.createElement("tbody"));
         let insertPoint = tbody.firstChild;
         let nextRow;
         while ((nextRow = this._orderedRows.shift())) {
@@ -18,6 +17,7 @@ var View = {
             }
             this._removeRow(insertPoint);
         }
+        return tbody;
     },
     _rowsById: new Map(),
     _removeRow(row) {

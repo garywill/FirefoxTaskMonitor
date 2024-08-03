@@ -55,7 +55,7 @@ var Control = {
     async update(force = false) {
         await State.update(force);
         
-        await this._updateDisplay(force);
+        return await this._updateDisplay(force);
     },
     
     // The force parameter can force a full update even when the mouse has been
@@ -116,7 +116,7 @@ var Control = {
         
 
         
-        View.commit();
+        return View.commit();
         
 
         
