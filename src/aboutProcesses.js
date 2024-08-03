@@ -42,15 +42,10 @@ ChromeUtils.defineLazyGetter(this, "ProfilerPopupBackground", function () {
 
 const { WebExtensionPolicy } = Cu.getGlobalForObject(Services);
 
-const SHOW_THREADS = Services.prefs.getBoolPref(
-    "toolkit.aboutProcesses.showThreads"
-);
-const SHOW_ALL_SUBFRAMES = Services.prefs.getBoolPref(
-    "toolkit.aboutProcesses.showAllSubframes"
-);
-const SHOW_PROFILER_ICONS = Services.prefs.getBoolPref(
-    "toolkit.aboutProcesses.showProfilerIcons"
-);
+const SHOW_THREADS = false;
+const SHOW_ALL_SUBFRAMES = false;
+const SHOW_PROFILER_ICONS = true;
+
 const PROFILE_DURATION = Math.max(
     1,
     Services.prefs.getIntPref("toolkit.aboutProcesses.profileDuration")
