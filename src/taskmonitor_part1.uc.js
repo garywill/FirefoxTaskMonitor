@@ -38,11 +38,6 @@ const    tabCpuMax = 30;
 const    tabMemColor = "rgb(100, 160, 255)"; //blue
 const    tabMemMax = 300*1000*1000;
 //const    tabBarsTransp
-const    addonCpuColor = tabCpuColor;
-const    addonCpuMax = 20;
-const    addonMemColor = tabMemColor;
-const    addonMemMax = 20*1000*1000;
-//const    addonBarsTransp
 const    allCpuColor = tabCpuColor;
 const    allCpuMax = 100;
 const    allMemColor = tabMemColor;
@@ -226,40 +221,6 @@ let wins = [];
         
         //var ttp = `CPU ${taskInfo.cpu}\nMEM ${taskInfo.mem_united}\nPID ${taskInfo.pid}`;
         //tabNode.getElementsByClassName("tab-icon-image")[0].tooltipText = ttp;
-    }
-    
-    function addCpuMem2AddonBtn(addonId, taskInfo)
-    {
-        wins.forEach( function(win, win_i) {
-            //var _btnNode = document.getElementsByAttribute("data-extensionid",addonId)[0];
-            var _btnNode = win.document.body.getElementsByAttribute("data-extensionid",addonId)[0];
-            var btnNode;
-            if ( _btnNode ) btnNode = _btnNode.getElementsByClassName("toolbarbutton-badge-stack")[0];
-            if (!btnNode) return;
-    
-            var BABarsCont = null;
-            BABarsCont = View.createVertRightEdgeCont(btnNode,  "taskMonitor-addonBtnP",
-                {
-                    position: "relative",
-                    display: "block",
-                    right: 0,
-                    zIndex: "999",
-                    height: "100%"
-                },
-                {
-                    display: "block",
-                    position: "absolute",
-                    height: "100%",
-                    zIndex: "99999",
-                    right: 0,
-                    // marginRight: (barWidth*2 + barGap) + "px",
-                    marginRight: "-4px",
-                }
-            );
-            
-            View.addBarsToNode(BABarsCont, taskInfo.cpu, taskInfo.mem,  {cpuColor: addonCpuColor, memColor: addonMemColor, cpuMax: addonCpuMax, memMax: addonMemMax}, taskInfo);
-        });
-      
     }
     
     function addCpuMem2whole(cpu, mem, tooltip)
