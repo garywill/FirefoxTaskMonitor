@@ -34,9 +34,9 @@ let taskMonitorTimerID = null;
 
 const    tabCpuColor = "#fd9191"; // red
 //const    tabMemColor = "rgb(242, 242, 0)"; //yellow
-const    tabCpuMax = 30;
+const    tabCpuMax = 100;
 const    tabMemColor = "rgb(100, 160, 255)"; //blue
-const    tabMemMax = 300*1000*1000;
+const    tabMemMax = 900*1000*1000;
 //const    tabBarsTransp
 const    allCpuColor = tabCpuColor;
 const    allCpuMax = 200;
@@ -100,6 +100,7 @@ function parseTbody(tbody)
             try{
                 ps [ps.length-1] .webs.push( {
                     title: td_name_args ['name'] ,
+                    tabWindowId: td_name_args ['tabWindowId'] ,
                 } );
             }catch(err){ 
                 console.error(err);
@@ -416,10 +417,33 @@ async function TaskMonitorUpdate() {
         
         var tbody = await Control.update(true);
         var ps = parseTbody(tbody);
+        
         var mtext_arr = psToMTextArr(ps) ;
         var mtext_tooltip = mtext_arr.join('\n');
         var totalCpuMem = calcPsTotalCpuMem(ps);
         addCpuMem2whole(totalCpuMem.cpu, totalCpuMem.mem, mtext_tooltip);
+        
+        for (var p of ps) {
+            for (var web of p.webs) {
+                if (web.tabWindowId !== undefined) {
+                    const r_tabfinder = tabFinder.get(web.tabWindowId);
+                    // { 
+                    //    tab: the tab button DOM node (.tabbrowser-tab) , 
+                    //    tabbrowser: seems to be a bigger object
+                    // }
+                    
+                    const tabNode = r_tabfinder.tab;
+                    addCpuMem2Tabbtn(tabNode, {
+                        cpu: p.cpu, 
+                        mem: p.mem,
+                        mem_united: p.mem_united,
+                        pid: p.pid,
+                        
+                    });
+                }
+            }
+        }
+        
     }else{
         //console.log("TaskMonitor staling for not first window");
     }

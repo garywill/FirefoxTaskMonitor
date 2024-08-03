@@ -609,6 +609,7 @@ let View = {
         if (tab && tab.tabbrowser) {
             fluentName = "about-processes-tab-name";
             fluentArgs.name = tab.tab.label;
+            fluentArgs.tabWindowId = data.outerWindowId; // this tabWindowId can be used by tabFinder.get()
             className = "tab";
         } else if (tab) {
             fluentName = "about-processes-preloaded-tab";
