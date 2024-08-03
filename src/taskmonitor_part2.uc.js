@@ -16,6 +16,8 @@
 
 console.log("taskmonitor_part2.js"); 
 
+"use strict";
+
 (() => {
     const barGap = 1;
     const barWidth = 3;

@@ -15,6 +15,8 @@
 
 console.log("taskmonitor_part3_clearMemoryPeriodically.js");
 
+"use strict";
+
 var memoryCleanerTimerID;
 
 (() => {
