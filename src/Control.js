@@ -118,11 +118,7 @@ var Control = {
         
         View.commit();
         
-        // Reset the selectedRow field if that row is no longer in the DOM
-        // to avoid keeping forever references to dead processes.
-        if (this.selectedRow && !this.selectedRow.parentNode) {
-            this.selectedRow = null;
-        }
+
         
     },
     _compareCpu(a, b) {

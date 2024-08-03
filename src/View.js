@@ -1,9 +1,5 @@
 var View = {
-    // Processes, tabs and subframes that we killed during the previous iteration.
-    // Array<{pid:Number} | {windowId:Number}>
-    _killedRecently: [],
     commit() {
-        this._killedRecently.length = 0;
         let tbody = document.getElementById("process-tbody");
         
         let insertPoint = tbody.firstChild;
@@ -23,24 +19,6 @@ var View = {
             this._removeRow(insertPoint);
         }
     },
-    // If we are not going to display the updated list of rows, drop references
-    // to rows that haven't been inserted in the DOM tree.
-    discardUpdate() {
-        for (let row of this._orderedRows) {
-            if (!row.parentNode) {
-                this._rowsById.delete(row.rowId);
-            }
-        }
-        this._orderedRows = [];
-    },
-    insertAfterRow(row) {
-        let tbody = row.parentNode;
-        let nextRow;
-        while ((nextRow = this._orderedRows.pop())) {
-            tbody.insertBefore(nextRow, row.nextSibling);
-        }
-    },
-    
     _rowsById: new Map(),
     _removeRow(row) {
         this._rowsById.delete(row.rowId);
@@ -317,31 +295,6 @@ var View = {
         let cpuCell = memoryCell.nextSibling;
         this.displayCpu(data, cpuCell, maxSlopeCpu);
         
-        // Column: Kill button – but not for all processes.
-        let killButton = cpuCell.nextSibling;
-        killButton.className = "action-icon";
-        
-        if (data.type.startsWith("web")) {
-            // This type of process can be killed.
-            if (this._killedRecently.some(kill => kill.pid && kill.pid == data.pid)) {
-                // We're racing between the "kill" action and the visual refresh.
-                // In a few cases, we could end up with the visual refresh showing
-                // a process as un-killed while we actually just killed it.
-                //
-                // We still want to display the process in case something actually
-                // went bad and the user needs the information to realize this.
-                // But we also want to make it visible that the process is being
-                // killed.
-                row.classList.add("killed");
-            } else {
-                // Otherwise, let's display the kill button.
-                killButton.classList.add("close-icon");
-                document.l10n.setAttributes(
-                    killButton,
-                    "about-processes-shutdown-process"
-                );
-            }
-        }
         
         return row;
     },
@@ -487,33 +440,6 @@ var View = {
         let image = tab?.tab.getAttribute("image");
         if (image) {
             nameCell.style.backgroundImage = `url('${image}')`;
-        }
-        
-        // Column: action
-        let killButton = nameCell.nextSibling;
-        killButton.className = "action-icon";
-        
-        if (data.tab && data.tab.tabbrowser) {
-            // A tab. We want to be able to close it.
-            if (
-                this._killedRecently.some(
-                    kill => kill.windowId && kill.windowId == data.outerWindowId
-                )
-            ) {
-                // We're racing between the "kill" action and the visual refresh.
-                // In a few cases, we could end up with the visual refresh showing
-                // a window as un-killed while we actually just killed it.
-                //
-                // We still want to display the window in case something actually
-                // went bad and the user needs the information to realize this.
-                // But we also want to make it visible that the window is being
-                // killed.
-                row.classList.add("killed");
-            } else {
-                // Otherwise, let's display the kill button.
-                killButton.classList.add("close-icon");
-                document.l10n.setAttributes(killButton, "about-processes-shutdown-tab");
-            }
         }
     },
     
