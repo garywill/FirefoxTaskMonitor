@@ -95,8 +95,12 @@ function parseTbody(tbody)
             
             ps.push(p);
         } 
-        else if (tr.classList.contains("window") ) {
-            ps [ps.length-1] .webs.push(td_name_args ['name']);
+        else if (tr.classList.contains("window") ) { 
+            try{
+                ps [ps.length-1] .webs.push(td_name_args ['name']);
+            }catch(err){ 
+                console.error(err);
+            }
         } 
     }
     return ps;
@@ -120,7 +124,7 @@ function psToMTextArr(ps)
         
         if (Array.isArray(p.webs)) {
             for (var webtitle of p.webs) {
-                var tabline = `└${webtitle}`;
+                var tabline = `　└ ${webtitle}`;
                 pline += "\n" + tabline;
             }
         }
@@ -222,6 +226,7 @@ let wins = [];
         //tabNode.getElementsByClassName("tab-icon-image")[0].tooltipText = ttp;
     }
     
+
     function addCpuMem2whole(cpu, mem, tooltip)
     {
        
@@ -234,7 +239,7 @@ let wins = [];
             if ( fftm_widget )
             {
                 var allBarsCont = null;
-                allBarsCont = View.createVertRightEdgeCont(fftm_widget, 'fftm_widget_p', 
+                allBarsCont = createVertRightEdgeCont(fftm_widget, 'fftm_widget_p', 
                     {
                         position: "relative",
                         display: "inline-block",
@@ -252,17 +257,17 @@ let wins = [];
                         marginLeft: -(barWidth*2 + barGap) + "px",
                     }
                 );
-                View.addBarsToNode(allBarsCont, cpu, mem, {cpuColor: allCpuColor, memColor: allMemColor, cpuMax: allCpuMax, memMax: allMemMax} );
+                addBarsToNode(allBarsCont, cpu, mem, {cpuColor: allCpuColor, memColor: allMemColor, cpuMax: allCpuMax, memMax: allMemMax} );
                 fftm_widget.title = fftm_widget.tooltipText = tooltip;
                 
 
-                for (var i=0; i< 1000; i++)
+                for (var i=0; i< 100; i++)
                 {
                     //var menu_task_obj = document.getElementById( "fftm_widget_task_"+i );
                     var menu_task_obj = win.document.body.getElementsByClassName( "fftm_widget_task" )[i];
                     var text = arr_tooltip_split[i];
                     if ( menu_task_obj && text ) {
-                        menu_task_obj.label = text.replace('\t','  ').replace('\t','  ').replace('\t','  ');
+                        menu_task_obj.label = text.replaceAll("\t", "　");
                         menu_task_obj.tooltipText = text;
                         menu_task_obj.hidden = false;
                     }
@@ -364,14 +369,8 @@ let wins = [];
 
 
 
-function TaskMonitorUpdate() {
-    /*
-    var wins = getAllWindows();
-    wins.forEach ( function(win, win_i) {
-        console.log("window index:", win_i, "tabs num:",
-            win.gBrowser.tabs.length );
-    });
-    */
+async function TaskMonitorUpdate() {
+
     
     if (isThisTheFirstWindowInOpeningWindowsList() ){
         //console.log("TaskMonitor refreshing");
@@ -412,7 +411,7 @@ async function startTaskMonitor() {
         console.log("TaskMonitor already running");
         return;
     }
-
+    await Control.init();
     await Control.update();
 
     taskMonitorTimerID = window.setInterval(() => TaskMonitorUpdate(), UPDATE_INTERVAL_MS);
