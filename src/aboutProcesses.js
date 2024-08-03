@@ -90,3 +90,90 @@ window.onload = async function () {
     // Then update at the normal frequency.
     window.setInterval(() => Control.update(), UPDATE_INTERVAL_MS);
 };
+function parseTbody(tbody) 
+{
+    let ps = [];
+    
+    let lastWebPid = null;
+    for (var iRow = 0; iRow<tbody.childNodes.length; iRow++) {
+        const tr = tbody.childNodes[iRow];
+        
+        if ( ! (tr.classList.contains("process") || tr.classList.contains("window") ) )
+            continue;
+        
+        
+        const td_name = tr.childNodes[0];
+        if (!td_name)
+            continue
+        const td_name_dataId = td_name.getAttribute("data-l10n-id");
+        
+        if (tr.classList.contains("window")  &&  td_name_dataId != "about-processes-tab-name" ) 
+            continue;
+        
+        let p = {};
+        if (tr.classList.contains("process")) {
+            p.type = "process";
+            
+            p.ptype = shortenFlname(td_name_dataId);
+            
+            const td_name_args = JSON.parse( td_name.getAttribute("data-l10n-args") );
+            p.pid = td_name_args ['pid'] ;
+            if ( td_name_args ['origin'] )
+                p.origin = td_name_args ['origin'];
+            
+            const td_cpu = tr.querySelector("td[data-l10n-id='about-processes-cpu']");
+            if (td_cpu)
+                p.cpu = JSON.parse( td_cpu.getAttribute("data-l10n-args") ) ['percent'] ;
+            
+            const td_mem = tr.childNodes[1]?.classList.contains("memory") ? tr.childNodes[1] : undefined;
+            if (td_mem) {
+                const args = JSON.parse( td_mem.getAttribute("data-l10n-args") );
+                p.mem =  args['total'].toFixed(1) + args['totalUnit'];
+            }
+            
+            if (p.type == "process"  &&  ['web', 'webIs'].includes(p.ptype) ) {
+                lastWebPid = p.pid;
+            } else {
+                lastWebPid = null;
+            }
+        } 
+        else if (tr.classList.contains("window") && lastWebPid > 0) {
+                
+            p.type = "tab";
+            p.pid = lastWebPid;
+            
+            
+            const td_name_args = JSON.parse( td_name.getAttribute("data-l10n-args") );
+            p.webTitle = td_name_args ['name'];
+
+            
+        } 
+        ps.push(p);
+    }
+    return ps;
+}
+
+const fluentNameToDataType = {  
+    "about-processes-web-process": "web",  
+    "about-processes-web-isolated-process": "webIs",  
+    "about-processes-web-serviceworker": "webServiceWorker",  
+    "about-processes-file-process": "file",  
+    "about-processes-extension-process": "extension",  
+    "about-processes-privilegedabout-process": "about",  
+    "about-processes-privilegedmozilla-process": "mozilla",  
+    "about-processes-with-coop-coep-process": "withCoopCoep",  
+    "about-processes-browser-process": "browser",  
+    "about-processes-plugin-process": "plugin",  
+    "about-processes-gmp-plugin-process": "gmpPlugin",  
+    "about-processes-gpu-process": "gpu",  
+    "about-processes-vr-process": "vr",  
+    "about-processes-rdd-process": "rdd"  , 
+    "about-processes-socket-process": "socket", 
+    "about-processes-remote-sandbox-broker-process": "remoteSandboxBroker", 
+    "about-processes-fork-server-process": "forkServer", 
+    "about-processes-preallocated-process": "pre", 
+    "about-processes-utility-process": "utility" 
+};  
+function shortenFlname(fluentName) {  
+    return fluentNameToDataType[fluentName] || "unknown"; 
+}  
