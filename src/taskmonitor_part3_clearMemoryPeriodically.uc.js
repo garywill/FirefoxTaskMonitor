@@ -2,7 +2,7 @@
 /* Firefox userChrome script
  * Periodically clean Firefox memory 
  * 
- * Tested on Firefox 102, with xiaoxiaoflood's uc loader
+ * Tested on Firefox 128, with xiaoxiaoflood's uc loader
  * 
  * Author: garywill (https://garywill.github.io)
  *      https://github.com/garywill/firefoxtaskmonitor

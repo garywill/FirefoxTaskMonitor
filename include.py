@@ -14,4 +14,4 @@ def include_files(input_file, output_file):
                 out.write(line)  
   
 # 使用示例  
-include_files('src/aboutProcesses.js', '/dev/stdout') 
+include_files('src/taskmonitor_part1.uc.js', '/dev/stdout') 

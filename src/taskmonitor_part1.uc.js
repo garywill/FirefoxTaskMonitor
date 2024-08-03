@@ -1,10 +1,9 @@
 /* Firefox userChrome script
  * Show tab cpu and memory bars on every tab button
- * Show addon cpu and memory bars on every addon toolbar button
- * Show all-task cpu and memory bars on a slender widget at the right of tab bar
- * Dynamically show top tasks on popup menu of the widget
+ * Show all-process cpu and memory bars on a slender widget at the right of tab bar
+ * Dynamically show processes on popup menu of the widget
  * 
- * Tested on Firefox 102, with xiaoxiaoflood's uc loader
+ * Tested on Firefox 128, with xiaoxiaoflood's uc loader
  * 
  * Author: garywill (https://garywill.github.io)
  *    https://github.com/garywill/firefoxtaskmonitor
@@ -36,14 +35,17 @@ var taskMonitorTimerID = null;
 
 const    tabCpuColor = "#fd9191"; // red
 //const    tabMemColor = "rgb(242, 242, 0)"; //yellow
+const    tabCpuMax = 30;
 const    tabMemColor = "rgb(100, 160, 255)"; //blue
-const    tabMemMax = 400*1000*1000;
+const    tabMemMax = 300*1000*1000;
 //const    tabBarsTransp
 const    addonCpuColor = tabCpuColor;
+const    addonCpuMax = 20;
 const    addonMemColor = tabMemColor;
 const    addonMemMax = 20*1000*1000;
 //const    addonBarsTransp
 const    allCpuColor = tabCpuColor;
+const    allCpuMax = 100;
 const    allMemColor = tabMemColor;
 const    allMemMax = 1000*1000*1000;
 //const    allBarsTransp
@@ -621,7 +623,7 @@ var View = {
         tabAllBarsCont.style.width = widthToSet + "px";
         
         
-        this.addBarsToNode(tabAllBarsCont, taskInfo.cpu, taskInfo.mem, {cpuColor: tabCpuColor, memColor: tabMemColor, memMax: tabMemMax, rightBlank: 2}, taskInfo);
+        this.addBarsToNode(tabAllBarsCont, taskInfo.cpu, taskInfo.mem, {cpuColor: tabCpuColor, memColor: tabMemColor, cpuMax: tabCpuMax, memMax: tabMemMax, rightBlank: 2}, taskInfo);
         
         
         //var ttp = `CPU ${taskInfo.cpu}\nMEM ${taskInfo.mem_united}\nPID ${taskInfo.pid}`;
@@ -655,7 +657,7 @@ var View = {
                 }
             );
             
-            View.addBarsToNode(BABarsCont, taskInfo.cpu, taskInfo.mem,  {cpuColor: addonCpuColor, memColor: addonMemColor, memMax: addonMemMax}, taskInfo);
+            View.addBarsToNode(BABarsCont, taskInfo.cpu, taskInfo.mem,  {cpuColor: addonCpuColor, memColor: addonMemColor, cpuMax: addonCpuMax, memMax: addonMemMax}, taskInfo);
         });
       
     },
@@ -688,7 +690,7 @@ var View = {
                         marginLeft: -(barWidth*2 + barGap) + "px",
                     }
                 );
-                View.addBarsToNode(allBarsCont, cpu, mem, {cpuColor: allCpuColor, memColor: allMemColor, memMax: allMemMax} );
+                View.addBarsToNode(allBarsCont, cpu, mem, {cpuColor: allCpuColor, memColor: allMemColor, cpuMax: allCpuMax, memMax: allMemMax} );
                 fftm_widget.title = fftm_widget.tooltipText = tooltip;
                 
 
@@ -770,7 +772,7 @@ var View = {
             cpubar.style.bottom = 0;
             node.appendChild(cpubar);
         }
-        cpubar.style.height = Math.min((cpu > 0) ? cpu : 0, 100) + "%";
+        cpubar.style.height = Math.min((cpu > 0) ? cpu * (100/ui.cpuMax) : 0, 100) + "%";
 
         var membar;
         membar = node.getElementsByClassName("memBar")[0];
