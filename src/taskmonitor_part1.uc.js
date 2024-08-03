@@ -109,32 +109,36 @@ function parseTbody(tbody)
     }
     return ps;
 }
-
+function pToPMText(p)
+{
+    var cpu_str = (typeof p.cpu === 'number' && p.cpu !== NaN) ? Math.round(p.cpu) : '?';
+    
+    var ptitle;
+    if ( ['web', 'webIs'].includes(p.ptype) ) {
+        ptitle = p.origin;
+    }else{
+        ptitle = p.ptype;
+    }
+    
+    var pmtext = `${cpu_str}\t${p.mem_united}\t${ptitle}\t${p.pid}`;
+    
+    if (Array.isArray(p.webs)) {
+        for (var web of p.webs) {
+            const webtitle = web.title;
+            var tabline = `　└ ${webtitle}`;
+            pmtext += "\n" + tabline;
+        }
+    }   
+    return pmtext;
+}
 function psToMTextArr(ps) 
 {
     let arr_mtext = [];
     for (let p of ps)
     {
-        var cpu_str = (typeof p.cpu === 'number' && p.cpu !== NaN) ? Math.round(p.cpu) : '?';
+        var pmtext = pToPMText(p);
         
-        var ptext_str;
-        if ( ['web', 'webIs'].includes(p.ptype) ) {
-            ptext_str = p.origin;
-        }else{
-            ptext_str = p.ptype;
-        }
-        
-        var pline = `${cpu_str}\t${p.mem_united}\t${ptext_str}\t${p.pid}`;
-        
-        if (Array.isArray(p.webs)) {
-            for (var web of p.webs) {
-                const webtitle = web.title;
-                var tabline = `　└ ${webtitle}`;
-                pline += "\n" + tabline;
-            }
-        }
-        
-        arr_mtext.push(pline)
+        arr_mtext.push(pmtext)
     }
     return arr_mtext;
 }
@@ -258,8 +262,8 @@ let wins = [];
         tabAllBarsCont.style.width = widthToSet + "px";
         
         
-        this.addBarsToNode(tabAllBarsCont, taskInfo.cpu, taskInfo.mem, {cpuColor: tabCpuColor, memColor: tabMemColor, cpuMax: tabCpuMax, memMax: tabMemMax, rightBlank: 2}, taskInfo);
-        
+        addBarsToNode(tabAllBarsCont, taskInfo.cpu, taskInfo.mem, {cpuColor: tabCpuColor, memColor: tabMemColor, cpuMax: tabCpuMax, memMax: tabMemMax, rightBlank: 2}, taskInfo);
+        tabAllBarsCont.title = tabAllBarsCont.tooltipText = taskInfo.pmtext;
         
         //var ttp = `CPU ${taskInfo.cpu}\nMEM ${taskInfo.mem_united}\nPID ${taskInfo.pid}`;
         //tabNode.getElementsByClassName("tab-icon-image")[0].tooltipText = ttp;
@@ -438,7 +442,7 @@ async function TaskMonitorUpdate() {
                         mem: p.mem,
                         mem_united: p.mem_united,
                         pid: p.pid,
-                        
+                        pmtext: pToPMText(p)
                     });
                 }
             }
