@@ -62,16 +62,7 @@ console.log("taskmonitor_part2.js");
                     
                     mp.appendChild(doc.createXULElement('menuseparator'));
                 
-                    var menu_open_about_performance = doc.createXULElement("menuitem");
-                    menu_open_about_performance.className = 'menuitem-iconic' ;
-                    menu_open_about_performance.label = "Open about:performance";
-                    menu_open_about_performance.onclick = function(event) {
-                        if (event.button == 0) {
-                            const win = Components.classes["@mozilla.org/appshell/window-mediator;1"].getService(Components.interfaces.nsIWindowMediator).getMostRecentWindow("navigator:browser");
-                            win.gBrowser.selectedTab = win.gBrowser.addTrustedTab('about:performance');
-                        }
-                    }
-                    mp.appendChild(menu_open_about_performance);
+
                     
                     var menu_open_about_processes = doc.createXULElement("menuitem");
                     menu_open_about_processes.className = 'menuitem-iconic' ;

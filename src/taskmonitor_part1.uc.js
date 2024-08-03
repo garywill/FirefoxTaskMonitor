@@ -361,14 +361,6 @@ let wins = [];
     }
 
 
-
-
-function open_about_performance() {
-    const win = Components.classes["@mozilla.org/appshell/window-mediator;1"]
-        .getService(Components.interfaces.nsIWindowMediator)
-        .getMostRecentWindow("navigator:browser");
-    win.gBrowser.selectedTab = win.gBrowser.addTrustedTab('about:performance');
-}
 //================================
 
 
