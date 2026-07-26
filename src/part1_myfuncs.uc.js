@@ -1,52 +1,3 @@
-/* Firefox userChrome script
- * Show tab cpu and memory bars on every tab button
- * Show all-process cpu and memory bars on a slender widget at the right of tab bar
- * Dynamically show processes on popup menu of the widget
- * 
- * Tested on Firefox 153, with MrOtherGuy's uc loader
- * 
- * Author: garywill (https://garywill.github.io)
- *    https://github.com/garywill/firefoxtaskmonitor
- * 
- * Notice
- * Some code is from Mozilla Firefox, which licensed under MPL
- * 
- */
-
-// ==UserScript==
-// @include         main
-// ==/UserScript==
-
-console.log("taskmonitor_part1.uc.js");
-
-
-"use strict";
-
-let taskMonitorTimerID = null;
-
-(() => {
-//=====================
-// User customization
-
-const    tabCpuColor = "#fd9191"; // red
-//const    tabMemColor = "rgb(242, 242, 0)"; //yellow
-const    tabCpuMax = 100;
-const    tabMemColor = "rgb(100, 160, 255)"; //blue
-const    tabMemMax = 900*1000*1000;
-//const    tabBarsTransp
-const    allCpuColor = tabCpuColor;
-const    allCpuMax = 200;
-const    allMemColor = tabMemColor;
-const    allMemMax = 1500*1000*1000;
-//const    allBarsTransp
-
-//=======================
-
-const barWidth = 3;
-const barGap = 1;
-
-#include "aboutProcesses.js"
-
 
 function parseTbody(tbody) 
 {
@@ -493,20 +444,4 @@ async function startTaskMonitor() {
 
 };
 startTaskMonitor();
-
-
-
-})();
-
-function stopTaskMonitor() {
-    window.clearInterval(taskMonitorTimerID);
-    taskMonitorTimerID = null;
-    if (memoryCleanerTimerID)
-    {
-        window.clearInterval(memoryCleanerTimerID);
-        memoryCleanerTimerID = null;
-    }
-}
-
-
 

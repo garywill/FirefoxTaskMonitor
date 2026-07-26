@@ -1075,7 +1075,7 @@ let Control = {
     
 };
 
-
+    
 
 function parseTbody(tbody) 
 {
@@ -1523,8 +1523,7 @@ async function startTaskMonitor() {
 };
 startTaskMonitor();
 
-
-
+    
 })();
 
 function stopTaskMonitor() {
@@ -1539,3 +1538,4 @@ function stopTaskMonitor() {
 
 
 
+    
