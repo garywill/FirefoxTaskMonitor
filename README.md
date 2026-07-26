@@ -4,7 +4,7 @@ Show CPU &amp; memory bars and usage.
 
 ![screenshot](https://s1.ax1x.com/2020/07/18/UcsPLF.jpg)
 
-Firefox userChrome script. Tested on Firefox 140
+Firefox userChrome script. Tested on Firefox 153
 
 ## Install
 
@@ -13,9 +13,13 @@ Use files from `dist/` folder.
 ## Features
 
 - Show every tab's CPU and memory usage (bars on every tab button)
+
 - Show browser CPU and memory bars on right side of tab bar (removable widget)
+
     - Clicking widget shows processes info dynamically in popup
+    
 - Mouse hover shows more details (CPU, memory, PID, host ...)
+
 - Optional periodically clean Firefox memory
 
 ---------------------
