@@ -45,7 +45,7 @@ ChromeUtils.defineLazyGetter(this, "ProfilerPopupBackground", function () {
 const { WebExtensionPolicy } = Cu.getGlobalForObject(Services);
 
 
-const gLocalizedUnits = 
+const gLocalizedUnits =
 {
     "duration": { "ns": "ns", "us": "µs", "ms": "ms", "s": "s", "m": "m", "h": "h", "d": "d" },
     "memory": { "B": "B", "KB": "KB", "MB": "MB", "GB": "GB", "TB": "TB", "PB": "PB", "EB": "EB" }
@@ -71,7 +71,7 @@ let tabFinder = {
             }
         }
     },
-    
+
     /**
      * Find the <xul:tab> for a window id.
      *
@@ -101,7 +101,7 @@ let tabFinder = {
         }
         return { tabbrowser, tab: tabbrowser.getTabForBrowser(browser) };
     },
-}; 
+};
 
 
 /**
@@ -111,22 +111,22 @@ let State = {
     // Store the previous and current samples so they can be compared.
     _previous: null,
     _latest: null,
-    
+
     async _promiseSnapshot() {
         let date = ChromeUtils.now();
         let main = await ChromeUtils.requestProcInfo();
         main.date = date;
-        
+
         let processes = new Map();
         processes.set(main.pid, main);
         for (let child of main.children) {
             child.date = date;
             processes.set(child.pid, child);
         }
-        
+
         return { processes, date };
     },
-    
+
     /**
      * Update the internal state.
      *
@@ -148,7 +148,7 @@ let State = {
             this._latest = newSnapshot;
         }
     },
-    
+
     _getThreadDelta(cur, prev, deltaT) {
         let result = {
             tid: cur.tid,
@@ -166,7 +166,7 @@ let State = {
         !!result.slopeCpu || cur.cpuCycleCount > (prev ? prev.cpuCycleCount : 0);
         return result;
     },
-    
+
     _getDOMWindows(process) {
         if (!process.windows) {
             return [];
@@ -204,9 +204,9 @@ let State = {
                 displayRank,
             };
         });
-        
+
         // We keep all tabs and addons but we collapse subframes that have the same host.
-        
+
         // A map from host -> subframe.
         let collapsible = new Map();
         let result = [];
@@ -225,7 +225,7 @@ let State = {
         }
         return result;
     },
-    
+
     /**
      * Compute the delta between two process snapshots.
      *
@@ -270,28 +270,28 @@ let State = {
         }
         let deltaT = (cur.date - prev.date) * NS_PER_MS;
         let threads = null;
-        
+
         result.deltaRamSize = cur.memory - prev.memory;
         result.slopeCpu = (cur.cpuTime - prev.cpuTime) / deltaT;
         result.active = !!result.slopeCpu || cur.cpuCycleCount > prev.cpuCycleCount;
         result.threads = threads;
         return result;
     },
-    
+
     getCounters() {
         tabFinder.update();
-        
+
         let counters = [];
-        
+
         for (let cur of this._latest.processes.values()) {
             let prev = this._previous?.processes.get(cur.pid);
             counters.push(this._getProcessDelta(cur, prev));
         }
-        
+
         return counters;
     }
-}; 
-     
+};
+
 
 let View = {
     commit() {
@@ -305,7 +305,7 @@ let View = {
                 tbody.insertBefore(nextRow, insertPoint);
             }
         }
-        
+
         if (insertPoint) {
             while ((nextRow = insertPoint.nextSibling)) {
                 this._removeRow(nextRow);
@@ -317,7 +317,7 @@ let View = {
     _rowsById: new Map(),
     _removeRow(row) {
         this._rowsById.delete(row.rowId);
-        
+
         row.remove();
     },
     _getOrCreateRow(rowId, cellCount) {
@@ -333,7 +333,7 @@ let View = {
         this._orderedRows.push(row);
         return row;
     },
-    
+
     displayCpu(data, cpuCell, maxSlopeCpu) {
         // Put a value < 0% when we really don't want to see a bar as
         // otherwise it sometimes appears due to rounding errors when we
@@ -378,7 +378,7 @@ let View = {
                     },
                     classes: ["cpu"],
                 });
-                
+
                 let cpuPercent = data.slopeCpu * 100;
                 if (maxSlopeCpu > 1) {
                     cpuPercent /= maxSlopeCpu;
@@ -389,7 +389,7 @@ let View = {
         }
         cpuCell.style.setProperty("--bar-width", barWidth);
     },
-    
+
     /**
      * Display a row showing a single process (without its threads).
      *
@@ -409,7 +409,7 @@ let View = {
             }
             row.className = classNames;
         }
-        
+
         // Column: Name
         let nameCell = row.firstChild;
         {
@@ -489,7 +489,7 @@ let View = {
                     fluentArgs.type = data.type;
                     break;
             }
-            
+
             // Show container names instead of raw origin attribute suffixes.
             if (fluentArgs.origin?.includes("^")) {
                 let origin = fluentArgs.origin;
@@ -512,12 +512,12 @@ let View = {
                     fluentName += "-private";
                 }
             }
-            
+
             let processNameElement = nameCell;
             document.l10n.setAttributes(processNameElement, fluentName, fluentArgs);
             nameCell.className = ["type", "favicon", ...classNames].join(" ");
             nameCell.setAttribute("id", data.pid + "-label");
-            
+
             let image;
             switch (data.type) {
                 case "browser":
@@ -556,7 +556,7 @@ let View = {
             }
             nameCell.style.backgroundImage = `url('${image}')`;
         }
-        
+
         // Column: Memory
         let memoryCell = nameCell.nextSibling;
         {
@@ -585,24 +585,24 @@ let View = {
                 });
             }
         }
-        
+
         // Column: CPU
         let cpuCell = memoryCell.nextSibling;
         this.displayCpu(data, cpuCell, maxSlopeCpu);
-        
-        
+
+
         return row;
     },
-    
-    
-    
+
+
+
     displayDOMWindowRow(data) {
         const cellCount = 2;
         let rowId = "w:" + data.outerWindowId;
         let row = this._getOrCreateRow(rowId, cellCount);
         row.win = data;
         row.className = "window";
-        
+
         // Column: name
         let nameCell = row.firstChild;
         let tab = tabFinder.get(data.outerWindowId);
@@ -640,34 +640,34 @@ let View = {
             nameCell.style.backgroundImage = `url('${image}')`;
         }
     },
-    
+
     utilityActorNameToFluentName(actorName) {
         let fluentName;
         switch (actorName) {
             case "audioDecoder_Generic":
                 fluentName = "about-processes-utility-actor-audio-decoder-generic";
                 break;
-                
+
             case "audioDecoder_AppleMedia":
                 fluentName = "about-processes-utility-actor-audio-decoder-applemedia";
                 break;
-                
+
             case "audioDecoder_WMF":
                 fluentName = "about-processes-utility-actor-audio-decoder-wmf";
                 break;
-                
+
             case "mfMediaEngineCDM":
                 fluentName = "about-processes-utility-actor-mf-media-engine";
                 break;
-                
+
             case "jSOracle":
                 fluentName = "about-processes-utility-actor-js-oracle";
                 break;
-                
+
             case "windowsUtils":
                 fluentName = "about-processes-utility-actor-windows-utils";
                 break;
-                
+
             case "windowsFileDialog":
                 fluentName = "about-processes-utility-actor-windows-file-dialog";
                 break;
@@ -681,7 +681,7 @@ let View = {
         }
         return fluentName;
     },
-    
+
     displayUtilityActorRow(data, parent) {
         const cellCount = 2;
         // The actor name is expected to be unique within a given utility process.
@@ -689,7 +689,7 @@ let View = {
         let row = this._getOrCreateRow(rowId, cellCount);
         row.actor = data;
         row.className = "actor";
-        
+
         // Column: name
         let nameCell = row.firstChild;
         let fluentName = this.utilityActorNameToFluentName(data.actorName);
@@ -700,7 +700,7 @@ let View = {
             classes: ["name", "indent", "favicon"],
         });
     },
-    
+
     /**
      * Display a row showing a single thread.
      *
@@ -713,7 +713,7 @@ let View = {
         let row = this._getOrCreateRow(rowId, cellCount);
         row.thread = data;
         row.className = "thread";
-        
+
         // Column: name
         let nameCell = row.firstChild;
         this._fillCell(nameCell, {
@@ -724,19 +724,19 @@ let View = {
             },
             classes: ["name", "double_indent"],
         });
-        
+
         // Column: CPU
         this.displayCpu(data, nameCell.nextSibling, maxSlopeCpu);
-        
+
         // Third column (Buttons) is empty, nothing to do.
     },
-    
+
     _orderedRows: [],
     _fillCell(elt, { classes, fluentName, fluentArgs }) {
         document.l10n.setAttributes(elt, fluentName, fluentArgs);
         elt.className = classes.join(" ");
     },
-    
+
     _getDuration(rawDurationNS) {
         if (rawDurationNS <= NS_PER_US) {
             return { duration: rawDurationNS, unit: "ns" };
@@ -758,7 +758,7 @@ let View = {
         }
         return { duration: rawDurationNS / NS_PER_DAY, unit: "d" };
     },
-    
+
     /**
      * Format a value representing an amount of memory.
      *
@@ -801,8 +801,8 @@ let View = {
         };
     }
 };
-     
-     
+
+
 
 
 let Control = {
@@ -812,54 +812,54 @@ let Control = {
     _hungItems: new Set(),
     _sortColumn: null,
     _sortAscendent: true,
-    
+
     init() {
         this._initHangReports();
     },
-    
+
     _initHangReports() {
         const PROCESS_HANG_REPORT_NOTIFICATION = "process-hang-report";
-        
+
         // Receiving report of a hung child.
         // Let's store if for our next update.
         let hangReporter = report => {
             report.QueryInterface(Ci.nsIHangReport);
             this._hungItems.add(report.childID);
         };
-        
-        
+
+
     },
     async update(force = false) {
         await State.update(force);
-        
+
         return await this._updateDisplay(force);
     },
-    
+
     // The force parameter can force a full update even when the mouse has been
     // moved recently.
     async _updateDisplay(force = false) {
         let counters = State.getCounters();
-        
+
         // We reset `_hungItems`, based on the assumption that the process hang
         // monitor will inform us again before the next update. Since the process hang monitor
         // pings its clients about once per second and we update about once per 2 seconds
         // (or more if the mouse moves), we should be ok.
         let hungItems = this._hungItems;
         this._hungItems = new Set();
-        
+
         counters = this._sortProcesses(counters);
-        
+
         // Stored because it is used when opening the list of threads.
         this._maxSlopeCpu = Math.max(...counters.map(process => process.slopeCpu));
-        
+
         let previousProcess = null;
         for (let process of counters) {
             this._sortDOMWindows(process.windows);
-            
+
             process.isHung = process.childID && hungItems.has(process.childID);
-            
+
             let processRow = View.displayProcessRow(process, this._maxSlopeCpu);
-            
+
             if (process.type != "extension") {
                 // We do not want to display extensions.
                 for (let win of process.windows) {
@@ -868,14 +868,14 @@ let Control = {
                     }
                 }
             }
-            
+
             if (process.type === "utility") {
                 for (let actor of process.utilityActors) {
                     View.displayUtilityActorRow(actor, process);
                 }
             }
-            
-            
+
+
             if (
                 this._sortColumn == null &&
                 previousProcess &&
@@ -886,13 +886,13 @@ let Control = {
             }
             previousProcess = process;
         }
-        
-        
-        
+
+
+
         return View.commit();
-        
-        
-        
+
+
+
     },
     _compareCpu(a, b) {
         return (
@@ -973,7 +973,7 @@ let Control = {
             return order;
         });
     },
-    
+
     // Assign a display rank to a process.
     //
     // The `browser` process comes first (rank 0).
@@ -1025,6 +1025,6 @@ let Control = {
                 return RANK_UTILITY;
         }
     }
-    
+
 };
 

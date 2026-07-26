@@ -8,15 +8,15 @@
  * Show tab cpu and memory bars on every tab button
  * Show all-process cpu and memory bars on a slender widget at the right of tab bar
  * Dynamically show processes on popup menu of the widget
- * 
+ *
  * Tested on Firefox 153, with MrOtherGuy's uc loader
- * 
+ *
  * Author: garywill (https://garywill.github.io)
  *    https://github.com/garywill/firefoxtaskmonitor
- * 
+ *
  * Notice
  * Some code is from Mozilla Firefox, which licensed under MPL
- * 
+ *
  */
 
 // ==UserScript==
@@ -98,7 +98,7 @@ ChromeUtils.defineLazyGetter(this, "ProfilerPopupBackground", function () {
 const { WebExtensionPolicy } = Cu.getGlobalForObject(Services);
 
 
-const gLocalizedUnits = 
+const gLocalizedUnits =
 {
     "duration": { "ns": "ns", "us": "µs", "ms": "ms", "s": "s", "m": "m", "h": "h", "d": "d" },
     "memory": { "B": "B", "KB": "KB", "MB": "MB", "GB": "GB", "TB": "TB", "PB": "PB", "EB": "EB" }
@@ -124,7 +124,7 @@ let tabFinder = {
             }
         }
     },
-    
+
     /**
      * Find the <xul:tab> for a window id.
      *
@@ -154,7 +154,7 @@ let tabFinder = {
         }
         return { tabbrowser, tab: tabbrowser.getTabForBrowser(browser) };
     },
-}; 
+};
 
 
 /**
@@ -164,22 +164,22 @@ let State = {
     // Store the previous and current samples so they can be compared.
     _previous: null,
     _latest: null,
-    
+
     async _promiseSnapshot() {
         let date = ChromeUtils.now();
         let main = await ChromeUtils.requestProcInfo();
         main.date = date;
-        
+
         let processes = new Map();
         processes.set(main.pid, main);
         for (let child of main.children) {
             child.date = date;
             processes.set(child.pid, child);
         }
-        
+
         return { processes, date };
     },
-    
+
     /**
      * Update the internal state.
      *
@@ -201,7 +201,7 @@ let State = {
             this._latest = newSnapshot;
         }
     },
-    
+
     _getThreadDelta(cur, prev, deltaT) {
         let result = {
             tid: cur.tid,
@@ -219,7 +219,7 @@ let State = {
         !!result.slopeCpu || cur.cpuCycleCount > (prev ? prev.cpuCycleCount : 0);
         return result;
     },
-    
+
     _getDOMWindows(process) {
         if (!process.windows) {
             return [];
@@ -257,9 +257,9 @@ let State = {
                 displayRank,
             };
         });
-        
+
         // We keep all tabs and addons but we collapse subframes that have the same host.
-        
+
         // A map from host -> subframe.
         let collapsible = new Map();
         let result = [];
@@ -278,7 +278,7 @@ let State = {
         }
         return result;
     },
-    
+
     /**
      * Compute the delta between two process snapshots.
      *
@@ -323,28 +323,28 @@ let State = {
         }
         let deltaT = (cur.date - prev.date) * NS_PER_MS;
         let threads = null;
-        
+
         result.deltaRamSize = cur.memory - prev.memory;
         result.slopeCpu = (cur.cpuTime - prev.cpuTime) / deltaT;
         result.active = !!result.slopeCpu || cur.cpuCycleCount > prev.cpuCycleCount;
         result.threads = threads;
         return result;
     },
-    
+
     getCounters() {
         tabFinder.update();
-        
+
         let counters = [];
-        
+
         for (let cur of this._latest.processes.values()) {
             let prev = this._previous?.processes.get(cur.pid);
             counters.push(this._getProcessDelta(cur, prev));
         }
-        
+
         return counters;
     }
-}; 
-     
+};
+
 
 let View = {
     commit() {
@@ -358,7 +358,7 @@ let View = {
                 tbody.insertBefore(nextRow, insertPoint);
             }
         }
-        
+
         if (insertPoint) {
             while ((nextRow = insertPoint.nextSibling)) {
                 this._removeRow(nextRow);
@@ -370,7 +370,7 @@ let View = {
     _rowsById: new Map(),
     _removeRow(row) {
         this._rowsById.delete(row.rowId);
-        
+
         row.remove();
     },
     _getOrCreateRow(rowId, cellCount) {
@@ -386,7 +386,7 @@ let View = {
         this._orderedRows.push(row);
         return row;
     },
-    
+
     displayCpu(data, cpuCell, maxSlopeCpu) {
         // Put a value < 0% when we really don't want to see a bar as
         // otherwise it sometimes appears due to rounding errors when we
@@ -431,7 +431,7 @@ let View = {
                     },
                     classes: ["cpu"],
                 });
-                
+
                 let cpuPercent = data.slopeCpu * 100;
                 if (maxSlopeCpu > 1) {
                     cpuPercent /= maxSlopeCpu;
@@ -442,7 +442,7 @@ let View = {
         }
         cpuCell.style.setProperty("--bar-width", barWidth);
     },
-    
+
     /**
      * Display a row showing a single process (without its threads).
      *
@@ -462,7 +462,7 @@ let View = {
             }
             row.className = classNames;
         }
-        
+
         // Column: Name
         let nameCell = row.firstChild;
         {
@@ -542,7 +542,7 @@ let View = {
                     fluentArgs.type = data.type;
                     break;
             }
-            
+
             // Show container names instead of raw origin attribute suffixes.
             if (fluentArgs.origin?.includes("^")) {
                 let origin = fluentArgs.origin;
@@ -565,12 +565,12 @@ let View = {
                     fluentName += "-private";
                 }
             }
-            
+
             let processNameElement = nameCell;
             document.l10n.setAttributes(processNameElement, fluentName, fluentArgs);
             nameCell.className = ["type", "favicon", ...classNames].join(" ");
             nameCell.setAttribute("id", data.pid + "-label");
-            
+
             let image;
             switch (data.type) {
                 case "browser":
@@ -609,7 +609,7 @@ let View = {
             }
             nameCell.style.backgroundImage = `url('${image}')`;
         }
-        
+
         // Column: Memory
         let memoryCell = nameCell.nextSibling;
         {
@@ -638,24 +638,24 @@ let View = {
                 });
             }
         }
-        
+
         // Column: CPU
         let cpuCell = memoryCell.nextSibling;
         this.displayCpu(data, cpuCell, maxSlopeCpu);
-        
-        
+
+
         return row;
     },
-    
-    
-    
+
+
+
     displayDOMWindowRow(data) {
         const cellCount = 2;
         let rowId = "w:" + data.outerWindowId;
         let row = this._getOrCreateRow(rowId, cellCount);
         row.win = data;
         row.className = "window";
-        
+
         // Column: name
         let nameCell = row.firstChild;
         let tab = tabFinder.get(data.outerWindowId);
@@ -693,34 +693,34 @@ let View = {
             nameCell.style.backgroundImage = `url('${image}')`;
         }
     },
-    
+
     utilityActorNameToFluentName(actorName) {
         let fluentName;
         switch (actorName) {
             case "audioDecoder_Generic":
                 fluentName = "about-processes-utility-actor-audio-decoder-generic";
                 break;
-                
+
             case "audioDecoder_AppleMedia":
                 fluentName = "about-processes-utility-actor-audio-decoder-applemedia";
                 break;
-                
+
             case "audioDecoder_WMF":
                 fluentName = "about-processes-utility-actor-audio-decoder-wmf";
                 break;
-                
+
             case "mfMediaEngineCDM":
                 fluentName = "about-processes-utility-actor-mf-media-engine";
                 break;
-                
+
             case "jSOracle":
                 fluentName = "about-processes-utility-actor-js-oracle";
                 break;
-                
+
             case "windowsUtils":
                 fluentName = "about-processes-utility-actor-windows-utils";
                 break;
-                
+
             case "windowsFileDialog":
                 fluentName = "about-processes-utility-actor-windows-file-dialog";
                 break;
@@ -734,7 +734,7 @@ let View = {
         }
         return fluentName;
     },
-    
+
     displayUtilityActorRow(data, parent) {
         const cellCount = 2;
         // The actor name is expected to be unique within a given utility process.
@@ -742,7 +742,7 @@ let View = {
         let row = this._getOrCreateRow(rowId, cellCount);
         row.actor = data;
         row.className = "actor";
-        
+
         // Column: name
         let nameCell = row.firstChild;
         let fluentName = this.utilityActorNameToFluentName(data.actorName);
@@ -753,7 +753,7 @@ let View = {
             classes: ["name", "indent", "favicon"],
         });
     },
-    
+
     /**
      * Display a row showing a single thread.
      *
@@ -766,7 +766,7 @@ let View = {
         let row = this._getOrCreateRow(rowId, cellCount);
         row.thread = data;
         row.className = "thread";
-        
+
         // Column: name
         let nameCell = row.firstChild;
         this._fillCell(nameCell, {
@@ -777,19 +777,19 @@ let View = {
             },
             classes: ["name", "double_indent"],
         });
-        
+
         // Column: CPU
         this.displayCpu(data, nameCell.nextSibling, maxSlopeCpu);
-        
+
         // Third column (Buttons) is empty, nothing to do.
     },
-    
+
     _orderedRows: [],
     _fillCell(elt, { classes, fluentName, fluentArgs }) {
         document.l10n.setAttributes(elt, fluentName, fluentArgs);
         elt.className = classes.join(" ");
     },
-    
+
     _getDuration(rawDurationNS) {
         if (rawDurationNS <= NS_PER_US) {
             return { duration: rawDurationNS, unit: "ns" };
@@ -811,7 +811,7 @@ let View = {
         }
         return { duration: rawDurationNS / NS_PER_DAY, unit: "d" };
     },
-    
+
     /**
      * Format a value representing an amount of memory.
      *
@@ -854,8 +854,8 @@ let View = {
         };
     }
 };
-     
-     
+
+
 
 
 let Control = {
@@ -865,54 +865,54 @@ let Control = {
     _hungItems: new Set(),
     _sortColumn: null,
     _sortAscendent: true,
-    
+
     init() {
         this._initHangReports();
     },
-    
+
     _initHangReports() {
         const PROCESS_HANG_REPORT_NOTIFICATION = "process-hang-report";
-        
+
         // Receiving report of a hung child.
         // Let's store if for our next update.
         let hangReporter = report => {
             report.QueryInterface(Ci.nsIHangReport);
             this._hungItems.add(report.childID);
         };
-        
-        
+
+
     },
     async update(force = false) {
         await State.update(force);
-        
+
         return await this._updateDisplay(force);
     },
-    
+
     // The force parameter can force a full update even when the mouse has been
     // moved recently.
     async _updateDisplay(force = false) {
         let counters = State.getCounters();
-        
+
         // We reset `_hungItems`, based on the assumption that the process hang
         // monitor will inform us again before the next update. Since the process hang monitor
         // pings its clients about once per second and we update about once per 2 seconds
         // (or more if the mouse moves), we should be ok.
         let hungItems = this._hungItems;
         this._hungItems = new Set();
-        
+
         counters = this._sortProcesses(counters);
-        
+
         // Stored because it is used when opening the list of threads.
         this._maxSlopeCpu = Math.max(...counters.map(process => process.slopeCpu));
-        
+
         let previousProcess = null;
         for (let process of counters) {
             this._sortDOMWindows(process.windows);
-            
+
             process.isHung = process.childID && hungItems.has(process.childID);
-            
+
             let processRow = View.displayProcessRow(process, this._maxSlopeCpu);
-            
+
             if (process.type != "extension") {
                 // We do not want to display extensions.
                 for (let win of process.windows) {
@@ -921,14 +921,14 @@ let Control = {
                     }
                 }
             }
-            
+
             if (process.type === "utility") {
                 for (let actor of process.utilityActors) {
                     View.displayUtilityActorRow(actor, process);
                 }
             }
-            
-            
+
+
             if (
                 this._sortColumn == null &&
                 previousProcess &&
@@ -939,13 +939,13 @@ let Control = {
             }
             previousProcess = process;
         }
-        
-        
-        
+
+
+
         return View.commit();
-        
-        
-        
+
+
+
     },
     _compareCpu(a, b) {
         return (
@@ -1026,7 +1026,7 @@ let Control = {
             return order;
         });
     },
-    
+
     // Assign a display rank to a process.
     //
     // The `browser` process comes first (rank 0).
@@ -1078,98 +1078,98 @@ let Control = {
                 return RANK_UTILITY;
         }
     }
-    
+
 };
 
-    
 
-function parseTbody(tbody) 
+
+function parseTbody(tbody)
 {
     let ps = [];
-    
+
     for (var iRow = 0; iRow<tbody.childNodes.length; iRow++) {
         const tr = tbody.childNodes[iRow];
-        
+
         if ( ! (tr.classList.contains("process") || tr.classList.contains("window") ) )
             continue;
-        
-        
+
+
         const td_name = tr.childNodes[0];
         if (!td_name)
             continue
         const td_name_dataId = td_name.getAttribute("data-l10n-id");
         const td_name_args = JSON.parse( td_name.getAttribute("data-l10n-args") );
-        
+
         // exclude hdslb pre web
-        if (tr.classList.contains("window")  &&  td_name_dataId != "about-processes-tab-name" ) 
+        if (tr.classList.contains("window")  &&  td_name_dataId != "about-processes-tab-name" )
             continue;
-        
+
         if (tr.classList.contains("process")) {
             let p = {};
             p.ptype = shortenFlname(td_name_dataId);
-            
-            
+
+
             p.pid = td_name_args ['pid'] ;
             if ( td_name_args ['origin'] )
                 p.origin = td_name_args ['origin'];
-            
+
             const td_cpu = tr.querySelector("td[data-l10n-id='about-processes-cpu']");
             if (td_cpu)
                 p.cpu = JSON.parse( td_cpu.getAttribute("data-l10n-args") ) ['percent'] *100 ;
-            
+
             const td_mem = tr.childNodes[1]?.classList.contains("memory") ? tr.childNodes[1] : undefined;
             if (td_mem) {
                 const args = JSON.parse( td_mem.getAttribute("data-l10n-args") );
                 p.mem_united =  args['total'].toFixed(1) + args['totalUnit'];
                 p.mem = memStrToByte(p.mem_united);
             }
-            
+
             p.webs = [];
-            
+
             ps.push(p);
-        } 
-        else if (tr.classList.contains("window") ) { 
+        }
+        else if (tr.classList.contains("window") ) {
             try{
                 ps [ps.length-1] .webs.push( {
                     title: td_name_args ['name'] ,
                     tabWindowId: td_name_args ['tabWindowId'] ,
                 } );
-            }catch(err){ 
+            }catch(err){
                 console.error(err);
             }
-        } 
+        }
     }
     return ps;
 }
 function pToPMText(p)
 {
     var cpu_str = (typeof p.cpu === 'number' && p.cpu !== NaN) ? Math.round(p.cpu) : '?';
-    
+
     var ptitle;
     if ( ['web', 'webIs'].includes(p.ptype) ) {
         ptitle = p.origin;
     }else{
         ptitle = p.ptype;
     }
-    
+
     var pmtext = `${cpu_str}\t${p.mem_united}\t${ptitle}\t${p.pid}`;
-    
+
     if (Array.isArray(p.webs)) {
         for (var web of p.webs) {
             const webtitle = web.title;
             var tabline = `　└ ${webtitle}`;
             pmtext += "\n" + tabline;
         }
-    }   
+    }
     return pmtext;
 }
-function psToMTextArr(ps) 
+function psToMTextArr(ps)
 {
     let arr_mtext = [];
     for (let p of ps)
     {
         var pmtext = pToPMText(p);
-        
+
         arr_mtext.push(pmtext)
     }
     return arr_mtext;
@@ -1179,55 +1179,55 @@ function psToMTextArr(ps)
 
 
 
-const fluentNameToDataType = {  
-    "about-processes-web-process": "web",  
-    "about-processes-web-isolated-process": "webIs",  
-    "about-processes-web-serviceworker": "webServiceWorker",  
-    "about-processes-file-process": "file",  
-    "about-processes-extension-process": "extension",  
-    "about-processes-privilegedabout-process": "about",  
-    "about-processes-privilegedmozilla-process": "mozilla",  
-    "about-processes-with-coop-coep-process": "withCoopCoep",  
-    "about-processes-browser-process": "browser",  
-    "about-processes-plugin-process": "plugin",  
-    "about-processes-gmp-plugin-process": "gmpPlugin",  
-    "about-processes-gpu-process": "gpu",  
-    "about-processes-vr-process": "vr",  
-    "about-processes-rdd-process": "rdd"  , 
-    "about-processes-socket-process": "socket", 
-    "about-processes-remote-sandbox-broker-process": "remoteSandboxBroker", 
-    "about-processes-fork-server-process": "forkServer", 
-    "about-processes-preallocated-process": "pre", 
+const fluentNameToDataType = {
+    "about-processes-web-process": "web",
+    "about-processes-web-isolated-process": "webIs",
+    "about-processes-web-serviceworker": "webServiceWorker",
+    "about-processes-file-process": "file",
+    "about-processes-extension-process": "extension",
+    "about-processes-privilegedabout-process": "about",
+    "about-processes-privilegedmozilla-process": "mozilla",
+    "about-processes-with-coop-coep-process": "withCoopCoep",
+    "about-processes-browser-process": "browser",
+    "about-processes-plugin-process": "plugin",
+    "about-processes-gmp-plugin-process": "gmpPlugin",
+    "about-processes-gpu-process": "gpu",
+    "about-processes-vr-process": "vr",
+    "about-processes-rdd-process": "rdd"  ,
+    "about-processes-socket-process": "socket",
+    "about-processes-remote-sandbox-broker-process": "remoteSandboxBroker",
+    "about-processes-fork-server-process": "forkServer",
+    "about-processes-preallocated-process": "pre",
     "about-processes-utility-process": "utility",
     "about-processes-inference-process": "inference",
-};  
-function shortenFlname(fluentName) {  
-    return fluentNameToDataType[fluentName] || "unknown"; 
-}  
+};
+function shortenFlname(fluentName) {
+    return fluentNameToDataType[fluentName] || "unknown";
+}
 
 
-function memStrToByte(sizeStr) {  
-    const match = sizeStr.trim().match(/^(\d+(\.\d+)?)\s*([KMG]?)B?$/i);  
-    if (!match) {  
+function memStrToByte(sizeStr) {
+    const match = sizeStr.trim().match(/^(\d+(\.\d+)?)\s*([KMG]?)B?$/i);
+    if (!match) {
         console.error("Invalid memory size string", sizeStr);
         return;
-    }  
-    
+    }
+
     const [, numberStr, , unit = ''] = match;
-    const number = parseFloat(numberStr);  
-    
-    switch (unit.toUpperCase()) {  
-        case 'K':  
-            return number * ONE_KILO;  
-        case 'M':  
-            return number * ONE_MEGA;  
-        case 'G':  
-            return number * ONE_GIGA;  
-        case '': 
-        default:  
-            return number;  
-    }  
-}  
+    const number = parseFloat(numberStr);
+
+    switch (unit.toUpperCase()) {
+        case 'K':
+            return number * ONE_KILO;
+        case 'M':
+            return number * ONE_MEGA;
+        case 'G':
+            return number * ONE_GIGA;
+        case '':
+        default:
+            return number;
+    }
+}
 
 function calcPsTotalCpuMem(ps)
 {
@@ -1243,198 +1243,198 @@ function calcPsTotalCpuMem(ps)
 
 
 
- 
-    function addCpuMem2Tabbtn(tabNode, taskInfo, hide=false)
-    {
-        var insertNode = tabNode.getElementsByClassName("tab-content")[0];
-        if (!insertNode) return;
- 
-        var tabAllBarsCont;
-        tabAllBarsCont = createVertRightEdgeCont(insertNode,  "taskMonitor-TabbtnP",
-            {
-                position: "absolute",
-                display: "block",
-                right: 0,
-                zIndex: "9",
-                height: "100%",
-                bottom: 0,
-            },
-            {
-                display: "block",
-                position: "absolute",
-                height: "100%",
-                zIndex: "99",
-                right: 0,
-                maxWidth: "100px",
-                minWidth: (barWidth*2 + barGap) + "px",
-                //width: ( parseInt(getComputedStyle(insertNode).width) / 2 ) + "px"
-            }
-        , hide );
-        if (hide) // TODO actually don't have to pass 'hide' to createVertRightEdgeCont, just return above
-            return;
-        
-        var close_button = tabNode.getElementsByClassName("tab-content")[0].getElementsByClassName("tab-close-button")[0];
-        close_button.style.zIndex = "999";
-        // close_button.style.position = "fixed";
-        
-        /*
-        const c_minwidth = barWidth*2 + barGap ;
-        const c_maxwidth = 100;
-        
-        if (widthToSet > c_maxwidth)
-            widthToSet = c_maxwidth;
-        if (widthToSet < c_minwidth)
-            widthToSet = c_minwidth;
-        */
-        var widthToSet = parseInt( getComputedStyle(insertNode).width ) / 2 ;
-        tabAllBarsCont.style.width = widthToSet + "px";
-        
-        
-        addBarsToNode(tabAllBarsCont, taskInfo.cpu, taskInfo.mem, {cpuColor: tabCpuColor, memColor: tabMemColor, cpuMax: tabCpuMax, memMax: tabMemMax, rightBlank: 2}, taskInfo);
-        tabAllBarsCont.title = tabAllBarsCont.tooltipText = taskInfo.pmtext;
-        
-        //var ttp = `CPU ${taskInfo.cpu}\nMEM ${taskInfo.mem_united}\nPID ${taskInfo.pid}`;
-        //tabNode.getElementsByClassName("tab-icon-image")[0].tooltipText = ttp;
-    }
-    
 
-    function addCpuMem2whole(cpu, mem, tooltip)
-    {
-       
-        var arr_tooltip_split = tooltip.split('\n');
-        
-        wins.forEach( function(win, win_i) {
-            
-            //var fftm_widget = document.getElementById("fftm_widget");
-            var fftm_widget = win.document.body.getElementsByClassName("fftm_widget_class")[0];
-            if ( fftm_widget )
-            {
-                var allBarsCont = null;
-                allBarsCont = createVertRightEdgeCont(fftm_widget, 'fftm_widget_p', 
-                    {
-                        position: "relative",
-                        display: "inline-block",
-                        zIndex: "999",
-                        height: "100%",
-                        //minWidth: (barWidth*2 + barGap) + "px",
-                        //width: (barWidth*2 + barGap) + "px",
-                    },
-                    {
-                        display: "block",
-                        position: "absolute",
-                        height: "100%",
-                        zIndex: "99999",
-                        minWidth: (barWidth*2 + barGap) + "px",
-                        marginLeft: -(barWidth*2 + barGap) + "px",
-                        "pointer-events": "none",
-                    }
-                );
-                addBarsToNode(allBarsCont, cpu, mem, {cpuColor: allCpuColor, memColor: allMemColor, cpuMax: allCpuMax, memMax: allMemMax} );
-                fftm_widget.title = fftm_widget.tooltipText = tooltip;
-                
+function addCpuMem2Tabbtn(tabNode, taskInfo, hide=false)
+{
+    var insertNode = tabNode.getElementsByClassName("tab-content")[0];
+    if (!insertNode) return;
 
-                for (var i=0; i< 100; i++)
+    var tabAllBarsCont;
+    tabAllBarsCont = createVertRightEdgeCont(insertNode,  "taskMonitor-TabbtnP",
+        {
+            position: "absolute",
+            display: "block",
+            right: 0,
+            zIndex: "9",
+            height: "100%",
+            bottom: 0,
+        },
+        {
+            display: "block",
+            position: "absolute",
+            height: "100%",
+            zIndex: "99",
+            right: 0,
+            maxWidth: "100px",
+            minWidth: (barWidth*2 + barGap) + "px",
+            //width: ( parseInt(getComputedStyle(insertNode).width) / 2 ) + "px"
+        }
+    , hide );
+    if (hide) // TODO actually don't have to pass 'hide' to createVertRightEdgeCont, just return above
+        return;
+
+    var close_button = tabNode.getElementsByClassName("tab-content")[0].getElementsByClassName("tab-close-button")[0];
+    close_button.style.zIndex = "999";
+    // close_button.style.position = "fixed";
+
+    /*
+    const c_minwidth = barWidth*2 + barGap ;
+    const c_maxwidth = 100;
+
+    if (widthToSet > c_maxwidth)
+        widthToSet = c_maxwidth;
+    if (widthToSet < c_minwidth)
+        widthToSet = c_minwidth;
+    */
+    var widthToSet = parseInt( getComputedStyle(insertNode).width ) / 2 ;
+    tabAllBarsCont.style.width = widthToSet + "px";
+
+
+    addBarsToNode(tabAllBarsCont, taskInfo.cpu, taskInfo.mem, {cpuColor: tabCpuColor, memColor: tabMemColor, cpuMax: tabCpuMax, memMax: tabMemMax, rightBlank: 2}, taskInfo);
+    tabAllBarsCont.title = tabAllBarsCont.tooltipText = taskInfo.pmtext;
+
+    //var ttp = `CPU ${taskInfo.cpu}\nMEM ${taskInfo.mem_united}\nPID ${taskInfo.pid}`;
+    //tabNode.getElementsByClassName("tab-icon-image")[0].tooltipText = ttp;
+}
+
+
+function addCpuMem2whole(cpu, mem, tooltip)
+{
+
+    var arr_tooltip_split = tooltip.split('\n');
+
+    wins.forEach( function(win, win_i) {
+
+        //var fftm_widget = document.getElementById("fftm_widget");
+        var fftm_widget = win.document.body.getElementsByClassName("fftm_widget_class")[0];
+        if ( fftm_widget )
+        {
+            var allBarsCont = null;
+            allBarsCont = createVertRightEdgeCont(fftm_widget, 'fftm_widget_p',
                 {
-                    //var menu_task_obj = document.getElementById( "fftm_widget_task_"+i );
-                    var menu_task_obj = win.document.body.getElementsByClassName( "fftm_widget_task" )[i];
-                    var text = arr_tooltip_split[i];
-                    if ( menu_task_obj && text ) {
-                        menu_task_obj.label = text.replaceAll("\t", "　");
-                        menu_task_obj.tooltipText = text;
-                        menu_task_obj.hidden = false;
-                    }
-                    if ( menu_task_obj && !text ) {
-                        menu_task_obj.hidden = true;
-                    }
-                    if ( !menu_task_obj && !text ) {
-                        break;
-                    }
+                    position: "relative",
+                    display: "inline-block",
+                    zIndex: "999",
+                    height: "100%",
+                    //minWidth: (barWidth*2 + barGap) + "px",
+                    //width: (barWidth*2 + barGap) + "px",
+                },
+                {
+                    display: "block",
+                    position: "absolute",
+                    height: "100%",
+                    zIndex: "99999",
+                    minWidth: (barWidth*2 + barGap) + "px",
+                    marginLeft: -(barWidth*2 + barGap) + "px",
+                    "pointer-events": "none",
                 }
-                
-                    
-            }
-        });
-    }
-    
- 
-    function createVertRightEdgeCont(BrowserNode, pname, PStyle, CStyle, hide=false)
-    {
-        var contParent = BrowserNode.getElementsByClassName(pname)[0];
-        
-        if (hide && contParent)
-        {
-            contParent.style.visibility="hidden";
-            return;
-        }else if (!hide && contParent)
-        {
-            contParent.style.visibility="visible";
-        }
-        
-        var cont = null;
-        if (!contParent) {
-            contParent = document.createXULElement("div");
-            contParent.className = pname;
-            for (var key in PStyle)
-            {
-                contParent.style[key] = PStyle[key]
-            }
-            //contParent.tooltipText = "PAPA";
-            
-            cont = document.createXULElement("div");
-            cont.className = "taskMonitorBarsCont";
-            for (var key in CStyle)
-            {
-                cont.style[key] = CStyle[key]
-            }
-            //cont.tooltipText = "haha";
-            
-            contParent.appendChild(cont);
-            BrowserNode.appendChild(contParent);
-        }else{
-            cont = contParent.getElementsByClassName("taskMonitorBarsCont")[0];
-        }
-        
-        return cont;
-    }
- 
-    function addBarsToNode(node, cpu, memory, ui, taskInfo) 
-    {
-        if (ui.rightBlank === undefined)  ui.rightBlank = 0;
-        
-        var cpubar;
-        cpubar = node.getElementsByClassName("cpuBar")[0];
-        if (!cpubar) {
-            cpubar = document.createElement("div");
-            cpubar.className = "cpuBar";
-            cpubar.style.backgroundColor = ui.cpuColor;
-            cpubar.style.width = barWidth + "px";
-            cpubar.style.position = "absolute";
-            cpubar.style.right = (ui.rightBlank + barWidth + barGap ) + "px";
-            cpubar.style.bottom = 0;
-            node.appendChild(cpubar);
-        }
-        cpubar.style.height = Math.min((cpu > 0) ? cpu * (100/ui.cpuMax) : 0, 100) + "%";
+            );
+            addBarsToNode(allBarsCont, cpu, mem, {cpuColor: allCpuColor, memColor: allMemColor, cpuMax: allCpuMax, memMax: allMemMax} );
+            fftm_widget.title = fftm_widget.tooltipText = tooltip;
 
-        var membar;
-        membar = node.getElementsByClassName("memBar")[0];
-        if (!membar) {
-            membar = document.createElement("div");
-            membar.className = "memBar";
-            membar.style.backgroundColor = ui.memColor; 
-            membar.style.width = barWidth + "px";
-            membar.style.position = "absolute";
-            membar.style.right = ui.rightBlank + "px";
-            membar.style.bottom = 0;
-            node.appendChild(membar);
+
+            for (var i=0; i< 100; i++)
+            {
+                //var menu_task_obj = document.getElementById( "fftm_widget_task_"+i );
+                var menu_task_obj = win.document.body.getElementsByClassName( "fftm_widget_task" )[i];
+                var text = arr_tooltip_split[i];
+                if ( menu_task_obj && text ) {
+                    menu_task_obj.label = text.replaceAll("\t", "　");
+                    menu_task_obj.tooltipText = text;
+                    menu_task_obj.hidden = false;
+                }
+                if ( menu_task_obj && !text ) {
+                    menu_task_obj.hidden = true;
+                }
+                if ( !menu_task_obj && !text ) {
+                    break;
+                }
+            }
+
+
         }
-        membar.style.height = Math.min(memory / ui.memMax * 100, 100) + "%";
-        
-        //node.style.width = (barWidth*2 + barGap + ui.rightBlank) + "px";
-        node.style.minWidth = (barWidth*2 + barGap + ui.rightBlank) + "px";
-        if (taskInfo){
-            node.tooltipText = `CPU ${taskInfo.cpu}\nMEM ${taskInfo.mem_united}\nPID ${taskInfo.pid}`
-        }
+    });
+}
+
+
+function createVertRightEdgeCont(BrowserNode, pname, PStyle, CStyle, hide=false)
+{
+    var contParent = BrowserNode.getElementsByClassName(pname)[0];
+
+    if (hide && contParent)
+    {
+        contParent.style.visibility="hidden";
+        return;
+    }else if (!hide && contParent)
+    {
+        contParent.style.visibility="visible";
     }
+
+    var cont = null;
+    if (!contParent) {
+        contParent = document.createXULElement("div");
+        contParent.className = pname;
+        for (var key in PStyle)
+        {
+            contParent.style[key] = PStyle[key]
+        }
+        //contParent.tooltipText = "PAPA";
+
+        cont = document.createXULElement("div");
+        cont.className = "taskMonitorBarsCont";
+        for (var key in CStyle)
+        {
+            cont.style[key] = CStyle[key]
+        }
+        //cont.tooltipText = "haha";
+
+        contParent.appendChild(cont);
+        BrowserNode.appendChild(contParent);
+    }else{
+        cont = contParent.getElementsByClassName("taskMonitorBarsCont")[0];
+    }
+
+    return cont;
+}
+
+function addBarsToNode(node, cpu, memory, ui, taskInfo)
+{
+    if (ui.rightBlank === undefined)  ui.rightBlank = 0;
+
+    var cpubar;
+    cpubar = node.getElementsByClassName("cpuBar")[0];
+    if (!cpubar) {
+        cpubar = document.createElement("div");
+        cpubar.className = "cpuBar";
+        cpubar.style.backgroundColor = ui.cpuColor;
+        cpubar.style.width = barWidth + "px";
+        cpubar.style.position = "absolute";
+        cpubar.style.right = (ui.rightBlank + barWidth + barGap ) + "px";
+        cpubar.style.bottom = 0;
+        node.appendChild(cpubar);
+    }
+    cpubar.style.height = Math.min((cpu > 0) ? cpu * (100/ui.cpuMax) : 0, 100) + "%";
+
+    var membar;
+    membar = node.getElementsByClassName("memBar")[0];
+    if (!membar) {
+        membar = document.createElement("div");
+        membar.className = "memBar";
+        membar.style.backgroundColor = ui.memColor;
+        membar.style.width = barWidth + "px";
+        membar.style.position = "absolute";
+        membar.style.right = ui.rightBlank + "px";
+        membar.style.bottom = 0;
+        node.appendChild(membar);
+    }
+    membar.style.height = Math.min(memory / ui.memMax * 100, 100) + "%";
+
+    //node.style.width = (barWidth*2 + barGap + ui.rightBlank) + "px";
+    node.style.minWidth = (barWidth*2 + barGap + ui.rightBlank) + "px";
+    if (taskInfo){
+        node.tooltipText = `CPU ${taskInfo.cpu}\nMEM ${taskInfo.mem_united}\nPID ${taskInfo.pid}`
+    }
+}
 
 
 //================================
@@ -1445,30 +1445,30 @@ let wins = [];
 async function TaskMonitorUpdate() {
 
     wins = getAllWindows(); // wins is needed by updating bars
-    
+
     if (isThisTheFirstWindowInOpeningWindowsList() ){
         //console.log("TaskMonitor refreshing");
-        
+
         var tbody = await Control.update(true);
         var ps = parseTbody(tbody);
-        
+
         var mtext_arr = psToMTextArr(ps) ;
         var mtext_tooltip = mtext_arr.join('\n');
         var totalCpuMem = calcPsTotalCpuMem(ps);
         addCpuMem2whole(totalCpuMem.cpu, totalCpuMem.mem, mtext_tooltip);
-        
+
         for (var p of ps) {
             for (var web of p.webs) {
                 if (web.tabWindowId !== undefined) {
                     const r_tabfinder = tabFinder.get(web.tabWindowId);
-                    // { 
-                    //    tab: the tab button DOM node (.tabbrowser-tab) , 
+                    // {
+                    //    tab: the tab button DOM node (.tabbrowser-tab) ,
                     //    tabbrowser: seems to be a bigger object
                     // }
-                    
+
                     const tabNode = r_tabfinder.tab;
                     addCpuMem2Tabbtn(tabNode, {
-                        cpu: p.cpu, 
+                        cpu: p.cpu,
                         mem: p.mem,
                         mem_united: p.mem_united,
                         pid: p.pid,
@@ -1483,11 +1483,11 @@ async function TaskMonitorUpdate() {
             });
         });
 
-        
+
     }else{
         //console.log("TaskMonitor staling for not first window");
     }
-        
+
 }
 
 
@@ -1498,11 +1498,11 @@ function isThisTheFirstWindowInOpeningWindowsList() {
     var win = enumerator.getNext();
     if (gBrowser === win.gBrowser){ //gBrowser is available only when no @onlyonce
         return true;
-    } 
+    }
 }
 function getAllWindows() {
     var windows = [];
-    
+
     var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"]
                     .getService(Components.interfaces.nsIWindowMediator);
     var enumerator = wm.getEnumerator("navigator:browser");
@@ -1529,7 +1529,7 @@ async function startTaskMonitor() {
 };
 startTaskMonitor();
 
-    
+
 })();
 
 function stopTaskMonitor() {
@@ -1544,7 +1544,7 @@ function stopTaskMonitor() {
 
 
 
-    
+
 
 // !! NOTE ! WARN ! This file is generated by build script. !! NOTE WARN !
 // !! WARN NOTE !!! Do NOT edit this file !!! !!! WARN ! NOTE !
