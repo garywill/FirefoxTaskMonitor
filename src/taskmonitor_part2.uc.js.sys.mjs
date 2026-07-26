@@ -2,9 +2,9 @@
  * Show tab cpu and memory bars on every tab button
  * Show all-process cpu and memory bars on a slender widget at the right of tab bar
  * Dynamically show processes on popup menu of the widget
- * 
- * Tested on Firefox 140, with xiaoxiaoflood's uc loader
- * 
+ *
+ * Tested on Firefox 153, with xiaoxiaoflood's uc loader
+ *
  * Author: garywill (https://garywill.github.io)
  *    https://github.com/garywill/firefoxtaskmonitor
  */
@@ -16,19 +16,19 @@ console.log("taskmonitor_part2.uc.js");
 
 (() => {
     const menu_show_tasks_num = 12;
-    
-    
+
+
     const barGap = 1;
     const barWidth = 3;
-    
+
     const sss = Components.classes["@mozilla.org/content/style-sheet-service;1"].getService(Components.interfaces.nsIStyleSheetService);
 
     widget_init();
-    
+
     function widget_init() {
         const fftm_widget_label = "TaskManager Widget";
         const fftm_widget_id = "fftm_widget";
-        
+
         const { CustomizableUI } = ChromeUtils.importESModule("moz-src:///browser/components/customizableui/CustomizableUI.sys.mjs");
 
 //         if ( ! CustomizableUI.getWidget(fftm_widget_id) ) {
@@ -45,26 +45,26 @@ console.log("taskmonitor_part2.uc.js");
                     btn.type = 'menu';
                     btn.className = 'toolbarbutton-1 chromeclass-toolbar-additional fftm_widget_class';
                     btn.style.MozBoxAlign="unset";
-                    
+
                     let mp = doc.createXULElement("menupopup");
                     mp.id = 'fftm_widget_menupopup';
                     mp.onclick = function(event) {  event.preventDefault()  ;} ;
-                
-                    
+
+
                     for (var i=0; i<menu_show_tasks_num ; i++)
                     {
                         var menuitem = doc.createXULElement("menuitem");
                         menuitem.id = "fftm_widget_task_" + i;
                         menuitem.label = "Task " + (i+1) ;
                         menuitem.className = 'menuitem-iconic fftm_widget_task' ;
-                        
+
                         mp.appendChild(menuitem);
                     }
-                    
-                    mp.appendChild(doc.createXULElement('menuseparator'));
-                
 
-                    
+                    mp.appendChild(doc.createXULElement('menuseparator'));
+
+
+
                     var menu_open_about_processes = doc.createXULElement("menuitem");
                     menu_open_about_processes.className = 'menuitem-iconic' ;
                     menu_open_about_processes.label = "Open about:processes";
@@ -75,7 +75,7 @@ console.log("taskmonitor_part2.uc.js");
                         }
                     }
                     mp.appendChild(menu_open_about_processes);
-                    
+
                     var menu_open_about_memory = doc.createXULElement("menuitem");
                     menu_open_about_memory.className = 'menuitem-iconic' ;
                     menu_open_about_memory.label = "Open about:memory";
@@ -86,7 +86,7 @@ console.log("taskmonitor_part2.uc.js");
                         }
                     }
                     mp.appendChild(menu_open_about_memory);
-                    
+
                     var menu_minimize_memory = doc.createXULElement("menuitem");
                     menu_minimize_memory.className = 'menuitem-iconic' ;
                     menu_minimize_memory.label = "Minimize memory usage";
@@ -95,15 +95,15 @@ console.log("taskmonitor_part2.uc.js");
                             const gMgr = Cc["@mozilla.org/memory-reporter-manager;1"].getService(
                                 Ci.nsIMemoryReporterManager
                             );
-                            
+
                             Services.obs.notifyObservers(null, "child-mmu-request");
                             gMgr.minimizeMemoryUsage( function() {console.log("minimizeMemoryUsage");} );
                         }
                     }
                     mp.appendChild(menu_minimize_memory);
-                    
+
                     mp.appendChild(doc.createXULElement('menuseparator'));
-                    
+
                     var menu_donate = doc.createXULElement("menuitem");
                     menu_donate.className = 'menuitem-iconic' ;
                     menu_donate.label = "More scripts / Visit author";
@@ -114,7 +114,7 @@ console.log("taskmonitor_part2.uc.js");
                         }
                     }
                     mp.appendChild(menu_donate);
-                    
+
                     btn.appendChild(mp);
                     return btn;
                 }

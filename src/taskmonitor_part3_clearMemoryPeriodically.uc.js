@@ -1,12 +1,12 @@
- 
+
 /* Firefox userChrome script
- * Periodically clean Firefox memory 
- * 
- * Tested on Firefox 140, with xiaoxiaoflood's uc loader
- * 
+ * Periodically clean Firefox memory
+ *
+ * Tested on Firefox 153, with xiaoxiaoflood's uc loader
+ *
  * Author: garywill (https://garywill.github.io)
  *      https://github.com/garywill/firefoxtaskmonitor
- * 
+ *
  */
 
 // ==UserScript==
@@ -24,17 +24,17 @@ var memoryCleanerTimerID;
     const cleanMemory_period = 20*60*1000; // milisecond
 
     memoryCleanerTimerID = window.setInterval(() => cleanMemory(), cleanMemory_period);
-        
+
     function cleanMemory() {
 
         if (isThisTheFirstWindowInOpeningWindowsList() ){
             const gMgr = Cc["@mozilla.org/memory-reporter-manager;1"].getService(
                 Ci.nsIMemoryReporterManager
             );
-            
+
             Services.obs.notifyObservers(null, "child-mmu-request");
             gMgr.minimizeMemoryUsage( function() {console.log("minimizeMemoryUsage");} );
-        } 
+        }
     }
 
     function isThisTheFirstWindowInOpeningWindowsList() {
@@ -44,7 +44,7 @@ var memoryCleanerTimerID;
         var win = enumerator.getNext();
         if (gBrowser === win.gBrowser){ //gBrowser is available only when no @onlyonce
             return true;
-        } 
+        }
     }
 })();
 
