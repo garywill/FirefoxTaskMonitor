@@ -3,7 +3,7 @@
  * Show all-process cpu and memory bars on a slender widget at the right of tab bar
  * Dynamically show processes on popup menu of the widget
  * 
- * Tested on Firefox 140, with xiaoxiaoflood's uc loader
+ * Tested on Firefox 153, with MrOtherGuy's uc loader
  * 
  * Author: garywill (https://garywill.github.io)
  *    https://github.com/garywill/firefoxtaskmonitor
@@ -160,7 +160,7 @@ let State = {
     _latest: null,
     
     async _promiseSnapshot() {
-        let date = Cu.now();
+        let date = ChromeUtils.now();
         let main = await ChromeUtils.requestProcInfo();
         main.date = date;
         
@@ -183,7 +183,8 @@ let State = {
         if (
             force ||
                 !this._latest ||
-                Cu.now() - this._latest.date > MINIMUM_INTERVAL_BETWEEN_SAMPLES_MS
+                ChromeUtils.now() - this._latest.date >
+                MINIMUM_INTERVAL_BETWEEN_SAMPLES_MS
         ) {
             // Replacing this._previous before we are done awaiting
             // this._promiseSnapshot can cause this._previous and this._latest to be
@@ -717,7 +718,10 @@ let View = {
             case "windowsFileDialog":
                 fluentName = "about-processes-utility-actor-windows-file-dialog";
                 break;
-                
+            case "pkcs11Module":
+                fluentName = "about-processes-utility-actor-pkcs11-module";
+                break;
+
             default:
                 fluentName = "about-processes-utility-actor-unknown";
                 break;
@@ -748,7 +752,7 @@ let View = {
      * Display a row showing a single thread.
      *
      * @param {ThreadDelta} data The data to display.
-     * @param {Number} maxSlopeCpu The largest slopeCpu value.
+     * @param {number} maxSlopeCpu The largest slopeCpu value.
      */
     displayThreadRow(data, maxSlopeCpu) {
         const cellCount = 3;
@@ -808,7 +812,7 @@ let View = {
      * As a special case, we also handle `null`, which represents the case in which we do
      * not have sufficient information to compute an amount of memory.
      *
-     * @param {Number?} value The value to format. Must be either `null` or a non-negative number.
+     * @param {number?} value The value to format. Must be either `null` or a non-negative number.
      * @return { {unit: "GB" | "MB" | "KB" | B" | "?"}, amount: Number } The formated amount and its
      *  unit, which may be used for e.g. additional CSS formating.
      */

@@ -3,7 +3,7 @@
  * Show all-process cpu and memory bars on a slender widget at the right of tab bar
  * Dynamically show processes on popup menu of the widget
  * 
- * Tested on Firefox 140, with xiaoxiaoflood's uc loader
+ * Tested on Firefox 153, with MrOtherGuy's uc loader
  * 
  * Author: garywill (https://garywill.github.io)
  *    https://github.com/garywill/firefoxtaskmonitor
@@ -46,6 +46,7 @@ const barWidth = 3;
 const barGap = 1;
 
 #include "aboutProcesses.js"
+
 
 function parseTbody(tbody) 
 {
